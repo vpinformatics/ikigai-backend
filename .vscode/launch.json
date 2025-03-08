@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch Program",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/index.js",
+      "runtimeArgs": ["--inspect-brk"],
+      "outFiles": ["${workspaceFolder}/**/*.js"],
+      "sourceMaps": true,
+      "restart": true
+    },
+    {
+      "name": "Attach to Node.js",
+      "type": "node",
+      "request": "attach",
+      "port": 9229
+    }
+  ]
+}

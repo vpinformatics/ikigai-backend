@@ -6,13 +6,13 @@ const util = require('util');
 const query = util.promisify(db.query).bind(db);
 const sendEmail = require('../utils/sendEmail');
 
-exports.register = async ({ email, password, role, created_by }) => {
+exports.register = async ({ email, password, role_id, created_by }) => {
   const hashedPassword = await bcrypt.hash(password, 12);
-  const roleId = (await query('SELECT id FROM roles WHERE name = ?', [role]))[0].id;
+  //const roleId = (await query('SELECT id FROM roles WHERE name = ?', [role]))[0].id;
   const user = {
     email,
     password: hashedPassword,
-    role_id: roleId,
+    role_id,
     created_by,
     created_on: new Date(),
     updated_by: created_by

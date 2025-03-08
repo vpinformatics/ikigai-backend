@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
+const authMiddleware = require('../middlewares/authMiddleware');
 
 /**
  * @swagger
@@ -8,6 +9,8 @@ const authController = require('../controllers/authController');
  *   post:
  *     summary: Register a new user
  *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -38,7 +41,7 @@ const authController = require('../controllers/authController');
  *       400:
  *         description: Bad request
  */
-router.post('/register', authController.register);
+router.post('/register', authMiddleware, authController.register);
 
 /**
  * @swagger
