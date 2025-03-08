@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
 const authMiddleware = require('../middlewares/authMiddleware');
+const passport = require('../config/passport');
 
 /**
  * @swagger
@@ -41,7 +42,7 @@ const authMiddleware = require('../middlewares/authMiddleware');
  *       400:
  *         description: Bad request
  */
-router.post('/register', authMiddleware, authController.register);
+router.post('/register', passport.authenticate('jwt', { session: false }), authController.register);
 
 /**
  * @swagger
@@ -83,7 +84,7 @@ router.post('/login', authController.login);
  *       200:
  *         description: Logout successful
  */
-router.post('/logout', authController.logout);
+router.post('/logout', passport.authenticate('jwt', { session: false }), authController.logout);
 
 /**
  * @swagger

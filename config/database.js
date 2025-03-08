@@ -1,11 +1,12 @@
 const mysql = require('mysql');
+const util = require('util');
 
 const pool = mysql.createPool({
-  connectionLimit: 10,
+  connectionLimit: 10, // Adjust the limit based on your requirements
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME
+  database: process.env.DB_NAME,
 });
 
 pool.getConnection((err, connection) => {
@@ -20,9 +21,10 @@ pool.getConnection((err, connection) => {
       console.error('Database connection was refused.');
     }
   }
-
-  if (connection) connection.release();
-  return;
+  console.log('Connected to database.');
+  if (connection) connection.release(); // Release the connection back to the pool
 });
+
+pool.query = util.promisify(pool.query);
 
 module.exports = pool;
