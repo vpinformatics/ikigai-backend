@@ -8,9 +8,11 @@ const sendEmail = require('../utils/sendEmail');
 
 exports.register = async ({ email, password, role, created_by }) => {
   const hashedPassword = await bcrypt.hash(password, 12);
-  const user = {  email,
+  const roleId = (await query('SELECT id FROM roles WHERE name = ?', [role]))[0].id;
+  const user = {
+    email,
     password: hashedPassword,
-    role,
+    role_id: roleId,
     created_by,
     created_on: new Date(),
     updated_by: created_by
@@ -21,6 +23,9 @@ exports.register = async ({ email, password, role, created_by }) => {
 
 exports.login = async ({ email, password }) => {
   const results = await query('SELECT * FROM users WHERE email = ?', [email]);
+  if (results.length === 0) {
+    throw new Error('Invalid credentials');
+  }
   const user = results[0];
 
   if (!user) {
@@ -33,10 +38,10 @@ exports.login = async ({ email, password }) => {
     throw new Error('Invalid credentials');
   }
 
-  const token = jwt.sign({ userId: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
-  const refreshToken = jwt.sign({ userId: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+  const token = jwt.sign({ id: user.id, email: user.email, role_id: user.role_id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+  const refreshToken = jwt.sign({ id: user.id, email: user.email, role_id: user.role_id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
-  return { token, refreshToken };
+  return { token, refreshToken, user: { userId: user.id, email: user.email, role: user.role_id } };
 };
 
 exports.refreshTokens = async ({ refreshToken }) => {

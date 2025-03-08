@@ -1,26 +1,20 @@
 const jwt = require('jsonwebtoken');
+const dotenv = require('dotenv');
+dotenv.config();
 
-exports.authMiddleware = (req, res, next) => {
-  const token = req.header('Authorization').replace('Bearer ', '');
-
+const authMiddleware = async (req, res, next) => {
+  const token = req.headers['authorization'] && req.headers['authorization'].split(' ')[1];
   if (!token) {
-    return res.status(401).json({ message: 'No token, authorization denied' });
+    return res.status(401).json({ message: 'Unauthorized' });
   }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
-    next();
-  } catch (error) {
-    res.status(401).json({ message: 'Token is not valid' });
+    return next();
+  } catch (err) {
+    return res.status(401).json({ message: 'Unauthorized' });
   }
 };
 
-exports.roleMiddleware = (roles) => {
-  return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ message: 'Forbidden' });
-    }
-    next();
-  };
-};
+module.exports = authMiddleware;

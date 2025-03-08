@@ -17,7 +17,7 @@ const authController = require('../controllers/authController');
  *             required:
  *               - email
  *               - password
- *               - role
+ *               - role_id
  *               - created_by
  *             properties:
  *               email:
@@ -26,12 +26,12 @@ const authController = require('../controllers/authController');
  *               password:
  *                 type: string
  *                 example: "passcode@123"
- *               role:
- *                 type: string
- *                 example: "dev"
+ *               role_id:
+ *                 type: integer
+ *                 example: 1
  *               created_by:
- *                 type: string
- *                 example: "admin"
+ *                 type: integer
+ *                 example: 1
  *     responses:
  *       201:
  *         description: User created successfully
@@ -52,16 +52,35 @@ router.post('/register', authController.register);
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - email
+ *               - password
  *             properties:
  *               email:
  *                 type: string
+ *                 example: "admin@gmail.com"
  *               password:
  *                 type: string
+ *                 example: "Admin!@12"
  *     responses:
  *       200:
- *         description: User logged in successfully
+ *         description: Login successful
+ *       401:
+ *         description: Invalid credentials
  */
 router.post('/login', authController.login);
+
+/**
+ * @swagger
+ * /auth/logout:
+ *   post:
+ *     summary: Logout a user
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: Logout successful
+ */
+router.post('/logout', authController.logout);
 
 /**
  * @swagger

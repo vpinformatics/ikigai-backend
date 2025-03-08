@@ -1,4 +1,5 @@
 const authService = require('../services/authService');
+const jwt = require('jsonwebtoken'); // Import jsonwebtoken
 
 exports.register = async (req, res, next) => {
   try {
@@ -16,6 +17,25 @@ exports.login = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+exports.login = async (req, res, next) => {
+  try {
+    const responseData = await authService.login(req.body);
+
+    if (responseData) {
+      res.status(200).json({ success: true, message: 'Login successful', responseData });
+    } else {
+      res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.logout = async (req, res, next) => {
+  // No session to destroy, just send a success response
+  res.status(200).json({ success: true, message: 'Logout successful' });
 };
 
 exports.refreshTokens = async (req, res, next) => {

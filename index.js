@@ -1,7 +1,6 @@
 const express = require('express');
 const dotenv = require('dotenv');
-// Load environment variables from .env file as the very first step
-dotenv.config();
+dotenv.config(); // Load environment variables from .env file as the very first step
 const cors = require('cors');
 const db = require('./config/database');
 const swaggerUi = require('swagger-ui-express');
@@ -9,6 +8,7 @@ const swaggerSpec = require('./config/swaggerConfig');
 const authRoutes = require('./routes/auth');
 const clientRoutes = require('./routes/client');
 const { errorHandler } = require('./middlewares/errorHandler');
+const jwt = require('jsonwebtoken'); // Import jsonwebtoken
 
 const app = express();
 
