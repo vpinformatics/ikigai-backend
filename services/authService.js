@@ -54,4 +54,75 @@ exports.forgotPassword = async ({ email }) => {
   }
 
   const resetToken = crypto.randomBytes(20).toString('hex');
-  const resetPasswordExpire = Date.now() + 10 * 60 * 1000
+  const resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+  await query('UPDATE users SET resetPasswordToken = ?, resetPasswordExpire = ? WHERE email = ?', [resetToken, resetPasswordExpire, email]);
+
+  const resetUrl = `${process.env.FRONTEND_URL}/passwordreset/${resetToken}`;
+
+  const message = `
+    <h1>You have requested a password reset</h1>
+    <p>Please make a PUT request to the following link:</p>
+    <a href=${resetUrl} clicktracking=off>${resetUrl}</a>
+  `;
+
+  try {
+    await sendEmail({
+      to: user.email,
+      subject: 'Password Reset Request',
+      text: message
+    });
+  } catch (err) {
+    await query('UPDATE users SET resetPasswordToken = NULL, resetPasswordExpire = NULL WHERE email = ?', [email]);
+    throw new Error('Email could not be sent');
+  }
+};
+
+exports.resetPassword = async ({ token, newPassword }) => {
+  const results = await query('SELECT * FROM users WHERE resetPasswordToken = ? AND resetPasswordExpire > ?', [token, Date.now()]);
+  const user = results[0];
+
+  if (!user) {
+    throw new Error('Invalid or expired token');
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, 12);
+  await query('UPDATE users SET password = ?, resetPasswordToken = NULL, resetPasswordExpire = NULL WHERE id = ?', [hashedPassword, user.id]);
+};
+
+exports.sendVerificationEmail = async ({ email }) => {
+  const results = await query('SELECT * FROM users WHERE email = ?', [email]);
+  const user = results[0];
+
+  if (!user) {
+    throw new Error('Email not found');
+  }
+
+  const verificationToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+  const verificationUrl = `${process.env.FRONTEND_URL}/verifyemail/${verificationToken}`;
+
+  const message = `
+    <h1>Verify your email</h1>
+    <p>Please make a GET request to the following link:</p>
+    <a href=${verificationUrl} clicktracking=off>${verificationUrl}</a>
+  `;
+
+  try {
+    await sendEmail({
+      to: user.email,
+      subject: 'Email Verification',
+      text: message
+    });
+  } catch (err) {
+    throw new Error('Email could not be sent');
+  }
+};
+
+exports.verifyEmail = async ({ token }) => {
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    await query('UPDATE users SET isVerified = 1 WHERE id = ?', [decoded.userId]);
+  } catch (err) {
+    throw new Error('Invalid or expired token');
+  }
+};
