@@ -14,16 +14,29 @@ const authController = require('../controllers/authController');
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *               - role
+ *               - created_by
  *             properties:
- *               username:
+ *               email:
  *                 type: string
+ *                 example: "email@example.com"
  *               password:
  *                 type: string
+ *                 example: "passcode@123"
  *               role:
  *                 type: string
+ *                 example: "dev"
+ *               created_by:
+ *                 type: string
+ *                 example: "admin"
  *     responses:
  *       201:
- *         description: User registered successfully
+ *         description: User created successfully
+ *       400:
+ *         description: Bad request
  */
 router.post('/register', authController.register);
 
@@ -40,7 +53,7 @@ router.post('/register', authController.register);
  *           schema:
  *             type: object
  *             properties:
- *               username:
+ *               email:
  *                 type: string
  *               password:
  *                 type: string

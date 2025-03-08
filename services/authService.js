@@ -6,15 +6,21 @@ const util = require('util');
 const query = util.promisify(db.query).bind(db);
 const sendEmail = require('../utils/sendEmail');
 
-exports.register = async ({ username, password, role }) => {
+exports.register = async ({ email, password, role, created_by }) => {
   const hashedPassword = await bcrypt.hash(password, 12);
-  const user = { username, password: hashedPassword, role };
+  const user = {  email,
+    password: hashedPassword,
+    role,
+    created_by,
+    created_on: new Date(),
+    updated_by: created_by
+  };
   await query('INSERT INTO users SET ?', user);
   return user;
 };
 
-exports.login = async ({ username, password }) => {
-  const results = await query('SELECT * FROM users WHERE username = ?', [username]);
+exports.login = async ({ email, password }) => {
+  const results = await query('SELECT * FROM users WHERE email = ?', [email]);
   const user = results[0];
 
   if (!user) {

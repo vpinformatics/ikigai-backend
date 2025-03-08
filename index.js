@@ -1,5 +1,7 @@
 const express = require('express');
 const dotenv = require('dotenv');
+// Load environment variables from .env file as the very first step
+dotenv.config();
 const cors = require('cors');
 const db = require('./config/database');
 const swaggerUi = require('swagger-ui-express');
@@ -8,15 +10,15 @@ const authRoutes = require('./routes/auth');
 const clientRoutes = require('./routes/client');
 const { errorHandler } = require('./middlewares/errorHandler');
 
-dotenv.config();
-
 const app = express();
 
+// Enable CORS for all routes
 app.use(cors());
+
 app.use(express.json());
 
 // Test DB connection
-db.connect(err => {
+db.getConnection((err) => {
   if (err) {
     console.error('Database connection failed: ' + err.stack);
     return;

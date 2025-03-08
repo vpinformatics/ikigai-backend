@@ -11,14 +11,14 @@ exports.getClientById = async (id) => {
   return results[0];
 };
 
-exports.createClient = async (clientData) => {
-  await query('INSERT INTO clients SET ?', clientData);
-  return clientData;
+exports.createClient = async (client) => {
+  const result = await query('INSERT INTO clients SET ?', client);
+  return { id: result.insertId, ...client };
 };
 
-exports.updateClient = async (id, clientData) => {
-  await query('UPDATE clients SET ? WHERE id = ?', [clientData, id]);
-  return clientData;
+exports.updateClient = async (id, client) => {
+  await query('UPDATE clients SET ? WHERE id = ?', [client, id]);
+  return { id, ...client };
 };
 
 exports.deleteClient = async (id) => {
