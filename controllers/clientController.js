@@ -2,7 +2,12 @@ const clientService = require('../services/clientService');
 
 exports.getAllClients = async (req, res, next) => {
   try {
-    const clients = await clientService.getAllClients();
+    const filters = req.query.filters ? JSON.parse(req.query.filters) : {};
+    const sort = req.query.sort ? JSON.parse(req.query.sort) : {};
+    const page = req.query.page ? parseInt(req.query.page, 10) : 1;
+    const limit = req.query.limit ? parseInt(req.query.limit, 10) : 10;
+
+    const clients = await clientService.getAllClients(filters, sort, page, limit);
     res.status(200).json({ clients });
   } catch (error) {
     next(error);

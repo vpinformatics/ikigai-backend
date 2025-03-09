@@ -11,6 +11,27 @@ const { authorize } = require('../middlewares/authMiddleware');
  *     tags: [Clients]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: filters
+ *         schema:
+ *           type: string
+ *         description: JSON string of filters to apply
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *         description: JSON string of sort field and order
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Number of records per page for pagination
  *     responses:
  *       200:
  *         description: List of clients
@@ -56,7 +77,7 @@ const { authorize } = require('../middlewares/authMiddleware');
  *                         type: string
  *                         enum: [active, inactive]
  */
-router.get('/', authorize([1, 2, 3]), clientController.getAllClients);
+router.get('/', authorize([1]), clientController.getAllClients);
 
 /**
  * @swagger
