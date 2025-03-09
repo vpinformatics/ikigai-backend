@@ -33,3 +33,27 @@ const seedDatabase = async () => {
 };
 
 seedDatabase();
+
+/*
+
+CREATE TABLE clients (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(100) NOT NULL,
+  address TEXT NOT NULL,
+  city VARCHAR(50),
+  state VARCHAR(50),
+    country  VARCHAR(50) DEFAULT 'India',
+  contact_person VARCHAR(100) NOT NULL,
+  contact_email VARCHAR(100) NOT NULL,
+  contact_phone VARCHAR(20),
+
+    created_by INT,
+    created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by INT,
+    updated_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    is_deleted BOOLEAN DEFAULT FALSE,
+    deleted_on TIMESTAMP NULL,
+  status ENUM('active', 'inactive') DEFAULT 'active'
+);
+
+*/

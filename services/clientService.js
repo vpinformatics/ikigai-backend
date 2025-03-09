@@ -1,26 +1,56 @@
-const db = require('../config/database');
-const util = require('util');
-const query = util.promisify(db.query).bind(db);
+const pool = require('../config/database');
 
 exports.getAllClients = async () => {
-  return await query('SELECT * FROM clients');
+  const clients = await pool.query('SELECT * FROM clients WHERE is_deleted = FALSE');
+  return clients;
 };
 
 exports.getClientById = async (id) => {
-  const results = await query('SELECT * FROM clients WHERE id = ?', [id]);
-  return results[0];
+  const clients = await pool.query('SELECT * FROM clients WHERE id = ? AND is_deleted = FALSE', [id]);
+  return clients;
 };
 
-exports.createClient = async (client) => {
-  const result = await query('INSERT INTO clients SET ?', client);
-  return { id: result.insertId, ...client };
+exports.createClient = async (clientData, userId) => {
+  const { name, address, city, state, country, contact_person, contact_email, contact_phone } = clientData;
+  const result = await pool.query(
+    'INSERT INTO clients (name, address, city, state, country, contact_person, contact_email, contact_phone, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    [name, address, city, state, country, contact_person, contact_email, contact_phone, userId, userId]
+  );
+  return {
+    id: result.insertId,
+    name,
+    address,
+    city,
+    state,
+    country,
+    contact_person,
+    contact_email,
+    contact_phone,
+  };
 };
 
-exports.updateClient = async (id, client) => {
-  await query('UPDATE clients SET ? WHERE id = ?', [client, id]);
-  return { id, ...client };
+exports.updateClient = async (id, clientData, userId) => {
+  const { name, address, city, state, country, contact_person, contact_email, contact_phone } = clientData;
+
+  await pool.query(
+    'UPDATE clients SET name = ?, address = ?, city = ?, state = ?, country = ?, contact_person = ?, contact_email = ?, contact_phone = ?, updated_by = ? WHERE id = ?  AND is_deleted = FALSE',
+    [name, address, city, state, country, contact_person, contact_email, contact_phone, userId, id]
+  );
+
+  return {
+    id,
+    name,
+    address,
+    city,
+    state,
+    country,
+    contact_person,
+    contact_email,
+    contact_phone,
+    updated_by: userId
+  };
 };
 
 exports.deleteClient = async (id) => {
-  await query('DELETE FROM clients WHERE id = ?', [id]);
+  await pool.query('DELETE FROM clients WHERE id = ? AND is_deleted = FALSE', [id]);
 };

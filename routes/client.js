@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const clientController = require('../controllers/clientController');
-const authMiddleware = require('../middlewares/authMiddleware');
-const roleMiddleware = require('../middlewares/roleMiddleware');
+const { authorize } = require('../middlewares/authMiddleware');
 
 /**
  * @swagger
@@ -15,8 +14,49 @@ const roleMiddleware = require('../middlewares/roleMiddleware');
  *     responses:
  *       200:
  *         description: List of clients
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 clients:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                       address:
+ *                         type: string
+ *                       city:
+ *                         type: string
+ *                       state:
+ *                         type: string
+ *                       country:
+ *                         type: string
+ *                       contact_person:
+ *                         type: string
+ *                       contact_email:
+ *                         type: string
+ *                       contact_phone:
+ *                         type: string
+ *                       created_by:
+ *                         type: integer
+ *                       created_on:
+ *                         type: string
+ *                         format: date-time
+ *                       updated_by:
+ *                         type: integer
+ *                       updated_on:
+ *                         type: string
+ *                         format: date-time
+ *                       status:
+ *                         type: string
+ *                         enum: [active, inactive]
  */
-router.get('/', authMiddleware, roleMiddleware(['admin']), clientController.getAllClients);
+router.get('/', authorize([1, 2, 3]), clientController.getAllClients);
 
 /**
  * @swagger
@@ -31,12 +71,48 @@ router.get('/', authMiddleware, roleMiddleware(['admin']), clientController.getA
  *         name: id
  *         required: true
  *         schema:
- *           type: string
+ *           type: integer
  *     responses:
  *       200:
  *         description: Client data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 name:
+ *                   type: string
+ *                 address:
+ *                   type: string
+ *                 city:
+ *                   type: string
+ *                 state:
+ *                   type: string
+ *                 country:
+ *                   type: string
+ *                 contact_person:
+ *                   type: string
+ *                 contact_email:
+ *                   type: string
+ *                 contact_phone:
+ *                   type: string
+ *                 created_by:
+ *                   type: integer
+ *                 created_on:
+ *                   type: string
+ *                   format: date-time
+ *                 updated_by:
+ *                   type: integer
+ *                 updated_on:
+ *                   type: string
+ *                   format: date-time
+ *                 status:
+ *                   type: string
+ *                   enum: [active, inactive]
  */
-router.get('/:id', authMiddleware, roleMiddleware(['admin']), clientController.getClientById);
+router.get('/:id', authorize([1, 2]), clientController.getClientById);
 
 /**
  * @swagger
@@ -55,15 +131,61 @@ router.get('/:id', authMiddleware, roleMiddleware(['admin']), clientController.g
  *             properties:
  *               name:
  *                 type: string
- *               email:
+ *               address:
  *                 type: string
- *               phone:
+ *               city:
+ *                 type: string
+ *               state:
+ *                 type: string
+ *               country:
+ *                 type: string
+ *               contact_person:
+ *                 type: string
+ *               contact_email:
+ *                 type: string
+ *               contact_phone:
  *                 type: string
  *     responses:
  *       201:
  *         description: Client created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 name:
+ *                   type: string
+ *                 address:
+ *                   type: string
+ *                 city:
+ *                   type: string
+ *                 state:
+ *                   type: string
+ *                 country:
+ *                   type: string
+ *                 contact_person:
+ *                   type: string
+ *                 contact_email:
+ *                   type: string
+ *                 contact_phone:
+ *                   type: string
+ *                 created_by:
+ *                   type: integer
+ *                 created_on:
+ *                   type: string
+ *                   format: date-time
+ *                 updated_by:
+ *                   type: integer
+ *                 updated_on:
+ *                   type: string
+ *                   format: date-time
+ *                 status:
+ *                   type: string
+ *                   enum: [active, inactive]
  */
-router.post('/', authMiddleware, roleMiddleware(['admin']), clientController.createClient);
+router.post('/', authorize([1, 2]), clientController.createClient);
 
 /**
  * @swagger
@@ -78,7 +200,7 @@ router.post('/', authMiddleware, roleMiddleware(['admin']), clientController.cre
  *         name: id
  *         required: true
  *         schema:
- *           type: string
+ *           type: integer
  *     requestBody:
  *       required: true
  *       content:
@@ -88,15 +210,56 @@ router.post('/', authMiddleware, roleMiddleware(['admin']), clientController.cre
  *             properties:
  *               name:
  *                 type: string
- *               email:
+ *               address:
  *                 type: string
- *               phone:
+ *               city:
+ *                 type: string
+ *               state:
+ *                 type: string
+ *               country:
+ *                 type: string
+ *               contact_person:
+ *                 type: string
+ *               contact_email:
+ *                 type: string
+ *               contact_phone:
  *                 type: string
  *     responses:
  *       200:
  *         description: Client updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 name:
+ *                   type: string
+ *                 address:
+ *                   type: string
+ *                 city:
+ *                   type: string
+ *                 state:
+ *                   type: string
+ *                 country:
+ *                   type: string
+ *                 contact_person:
+ *                   type: string
+ *                 contact_email:
+ *                   type: string
+ *                 contact_phone:
+ *                   type: string
+ *                 updated_by:
+ *                   type: integer
+ *                 updated_on:
+ *                   type: string
+ *                   format: date-time
+ *                 status:
+ *                   type: string
+ *                   enum: [active, inactive]
  */
-router.put('/:id', authMiddleware, roleMiddleware(['admin']), clientController.updateClient);
+router.put('/:id', authorize([1,2]), clientController.updateClient);
 
 /**
  * @swagger
@@ -111,11 +274,11 @@ router.put('/:id', authMiddleware, roleMiddleware(['admin']), clientController.u
  *         name: id
  *         required: true
  *         schema:
- *           type: string
+ *           type: integer
  *     responses:
  *       204:
  *         description: Client deleted
  */
-router.delete('/:id', authMiddleware, roleMiddleware(['admin']), clientController.deleteClient);
+router.delete('/:id', authorize([1,2]), clientController.deleteClient);
 
 module.exports = router;

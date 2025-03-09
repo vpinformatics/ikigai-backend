@@ -1,20 +1,28 @@
-const jwt = require('jsonwebtoken');
-const dotenv = require('dotenv');
-dotenv.config();
+const passport = require('passport');
 
-const authMiddleware = async (req, res, next) => {
-  const token = req.headers['authorization'] && req.headers['authorization'].split(' ')[1];
-  if (!token) {
-    return res.status(401).json({ message: 'Unauthorized' });
-  }
+function authorize(roles = []) {
+    // roles param can be a single role string (e.g. 'Admin') or an array of roles (e.g. ['Admin', 'Supervisor'])
+    if (typeof roles === 'string') {
+        roles = [roles];
+    }
 
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
-    return next();
-  } catch (err) {
-    return res.status(401).json({ message: 'Unauthorized' });
-  }
+    return [
+        // authenticate JWT token and attach user to request object (req.user)
+        passport.authenticate('jwt', { session: false }),
+
+        // authorize based on user role
+        (req, res, next) => {
+            if (roles.length && !roles.includes(req.user.role_id)) {
+                // user's role is not authorized
+                return res.status(401).json({ message: 'Unauthorized' });
+            }
+
+            // authentication and authorization successful
+            next();
+        }
+    ];
+}
+
+module.exports = {
+    authorize
 };
-
-module.exports = authMiddleware;

@@ -12,7 +12,11 @@ exports.getAllClients = async (req, res, next) => {
 exports.getClientById = async (req, res, next) => {
   try {
     const client = await clientService.getClientById(req.params.id);
-    res.status(200).json({ client });
+    if (client) {
+      res.status(200).json(client);
+    } else {
+      res.status(404).json({ message: 'Client not found' });
+    }
   } catch (error) {
     next(error);
   }
@@ -20,7 +24,8 @@ exports.getClientById = async (req, res, next) => {
 
 exports.createClient = async (req, res, next) => {
   try {
-    const client = await clientService.createClient(req.body);
+    const userId = req.user.id;
+    const client = await clientService.createClient(req.body, userId);
     res.status(201).json({ client });
   } catch (error) {
     next(error);
@@ -29,7 +34,8 @@ exports.createClient = async (req, res, next) => {
 
 exports.updateClient = async (req, res, next) => {
   try {
-    const client = await clientService.updateClient(req.params.id, req.body);
+    const userId = req.user.id;
+    const client = await clientService.updateClient(req.params.id, req.body, userId);
     res.status(200).json({ client });
   } catch (error) {
     next(error);

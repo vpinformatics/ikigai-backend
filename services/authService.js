@@ -38,8 +38,8 @@ exports.login = async ({ email, password }) => {
     throw new Error('Invalid credentials');
   }
 
-  const token = jwt.sign({ id: user.id, email: user.email, role_id: user.role_id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-  const refreshToken = jwt.sign({ id: user.id, email: user.email, role_id: user.role_id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+  const token = generateToken(user);
+  const refreshToken = generateToken(user,'refresh');
 
   return { token, refreshToken, user: { userId: user.id, email: user.email, role: user.role_id } };
 };
@@ -137,3 +137,16 @@ exports.verifyEmail = async ({ token }) => {
     throw new Error('Invalid or expired token');
   }
 };
+
+function generateToken(user, type) {
+  var expiredIn = '1h';
+  if (type === 'refresh') {
+    expiredIn = '7d';
+  }
+  const payload = {
+      id: user.id,
+      email: user.email,
+      role_id: user.role_id
+  };
+  return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
+}
