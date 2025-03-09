@@ -2,13 +2,17 @@ const pool = require('../config/database');
 
 exports.getAllClients = async (filters, sort, page, limit) => {
   let query = 'SELECT * FROM clients WHERE is_deleted = FALSE';
+  let countQuery = 'SELECT COUNT(*) as count FROM clients WHERE is_deleted = FALSE';
   const queryParams = [];
+  const countParams = [];
 
   // Apply filters
   if (filters) {
     Object.keys(filters).forEach((key) => {
       query += ` AND ${key} = ?`;
+      countQuery += ` AND ${key} = ?`;
       queryParams.push(filters[key]);
+      countParams.push(filters[key]);
     });
   }
 
@@ -24,13 +28,10 @@ exports.getAllClients = async (filters, sort, page, limit) => {
   let totalPages = 0;
   let offset = 0;
   if (page && limit) {
-    const countQuery = 'SELECT COUNT(*) as count FROM clients WHERE is_deleted = FALSE';
-    const countResult = await pool.query(countQuery);
-
+    const countResult = await pool.query(countQuery, countParams);
     totalRecords = countResult[0].count;
     totalPages = Math.ceil(totalRecords / limit);
     offset = (page - 1) * limit;
-
     query += ` LIMIT ? OFFSET ?`;
     queryParams.push(limit, offset);
   }
