@@ -35,6 +35,12 @@ const seedDatabase = async () => {
 seedDatabase();
 
 /*
+INSERT INTO users (email, password, role_id, created_by, updated_by) VALUES ('admin@gmail.com', '$2b$12$JFiiXYnMMzXxghf8TtLZHuzlAzy9NUBIKETk0HOkeice1yEIPu4L2', 1, null, null)
+
+INSERT INTO roles (name) VALUES ('Admin')
+INSERT INTO roles (name) VALUES ('Supervisor')
+INSERT INTO roles (name) VALUES ('Inspector')
+INSERT INTO roles (name) VALUES ('Engineer')
 
 CREATE TABLE clients (
   id INT PRIMARY KEY AUTO_INCREMENT,
@@ -42,18 +48,18 @@ CREATE TABLE clients (
   address TEXT NOT NULL,
   city VARCHAR(50),
   state VARCHAR(50),
-    country  VARCHAR(50) DEFAULT 'India',
+  country  VARCHAR(50) DEFAULT 'India',
   contact_person VARCHAR(100) NOT NULL,
   contact_email VARCHAR(100) NOT NULL,
   contact_phone VARCHAR(20),
-
-    created_by INT,
-    created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_by INT,
-    updated_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    is_deleted BOOLEAN DEFAULT FALSE,
-    deleted_on TIMESTAMP NULL,
-  status ENUM('active', 'inactive') DEFAULT 'active'
+  created_by INT,
+  created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_by INT,
+  updated_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  is_deleted BOOLEAN DEFAULT FALSE,
+  deleted_on TIMESTAMP NULL,
+  status ENUM('active', 'inactive') DEFAULT 'active',
+  gst_number varchar(100),
 );
 
 */

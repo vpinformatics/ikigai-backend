@@ -75,11 +75,11 @@ exports.createClient = async (clientData, userId) => {
 };
 
 exports.updateClient = async (id, clientData, userId) => {
-  const { name, address, city, state, country, contact_person, contact_email, contact_phone } = clientData;
+  const { name, address, city, state, country, contact_person, contact_email, contact_phone, gst_number } = clientData;
 
   await pool.query(
-    'UPDATE clients SET name = ?, address = ?, city = ?, state = ?, country = ?, contact_person = ?, contact_email = ?, contact_phone = ?, updated_by = ? WHERE id = ?  AND is_deleted = FALSE',
-    [name, address, city, state, country, contact_person, contact_email, contact_phone, userId, id]
+    'UPDATE clients SET name = ?, address = ?, city = ?, state = ?, country = ?, contact_person = ?, contact_email = ?, contact_phone = ?, updated_by = ?, gst_number = ? WHERE id = ?  AND is_deleted = FALSE',
+    [name, address, city, state, country, contact_person, contact_email, contact_phone, userId, gst_number, id]
   );
 
   return {
@@ -92,7 +92,8 @@ exports.updateClient = async (id, clientData, userId) => {
     contact_person,
     contact_email,
     contact_phone,
-    updated_by: userId
+    updated_by: userId,
+    gst_number
   };
 };
 

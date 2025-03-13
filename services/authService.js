@@ -41,7 +41,7 @@ exports.login = async ({ email, password }) => {
   const token = generateToken(user);
   const refreshToken = generateToken(user,'refresh');
 
-  return { token, refreshToken, user: { userId: user.id, email: user.email, role: user.role_id } };
+  return { token, refreshToken, userInfo: { userId: user.id, email: user.email, role: user.role_id } };
 };
 
 exports.refreshTokens = async ({ refreshToken }) => {
