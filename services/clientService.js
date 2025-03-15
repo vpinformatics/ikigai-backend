@@ -9,10 +9,34 @@ exports.getAllClients = async (filters, sort, page, limit) => {
   // Apply filters
   if (filters) {
     Object.keys(filters).forEach((key) => {
-      query += ` AND ${key} = ?`;
-      countQuery += ` AND ${key} = ?`;
-      queryParams.push(filters[key]);
-      countParams.push(filters[key]);
+      const value = filters[key];
+  
+      // Ignore empty search filter
+      if (key === "search" && (!value || !value.trim())) {
+        return;
+      }
+  
+      if (key === "search") {
+        const searchFields = [
+          "name", "address", "city", "state", "country",
+          "contact_person", "contact_email", "contact_phone", "gst_number"
+        ];
+  
+        const tmpQuery = `(${searchFields.map(field => `${field} LIKE ?`).join(" OR ")})`;
+  
+        query += ` AND ${tmpQuery}`;
+        countQuery += ` AND ${tmpQuery}`;
+  
+        // Push the same search value with wildcards for all fields
+        const searchValue = `%${value}%`;
+        queryParams.push(...searchFields.map(() => searchValue));
+        countParams.push(...searchFields.map(() => searchValue));
+      } else {
+        query += ` AND ${key} = ?`;
+        countQuery += ` AND ${key} = ?`;
+        queryParams.push(value);
+        countParams.push(value);
+      }
     });
   }
 
