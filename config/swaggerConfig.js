@@ -1,12 +1,15 @@
 const swaggerJsdoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
+const express = require('express');
+const router = express.Router();
 
 const options = {
-  swaggerDefinition: {
+  definition: {
     openapi: '3.0.0',
     info: {
-      title: 'Node.js API Documentation',
+      title: 'IKIGAI API Documentation',
       version: '1.0.0',
-      description: 'This is the API documentation for the Node.js application.',
+      description: 'API documentation for the IKIGAI',
     },
     servers: [
       {
@@ -28,9 +31,11 @@ const options = {
       },
     ],
   },
-  apis: ['./routes/*.js'], // Path to the API docs
+  apis: ['./routes/*.js'], // Path to the API routes
 };
 
-const swaggerSpec = swaggerJsdoc(options);
+const specs = swaggerJsdoc(options);
 
-module.exports = swaggerSpec;
+router.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+
+module.exports = router;

@@ -22,6 +22,8 @@ const passport = require('../config/passport');
  *               - password
  *               - role_id
  *               - created_by
+ *               - name
+*                - is_active
  *             properties:
  *               email:
  *                 type: string
@@ -35,6 +37,12 @@ const passport = require('../config/passport');
  *               created_by:
  *                 type: integer
  *                 example: 1
+ *               name:
+ *                 type: string
+ *                 example: "Jhon"
+ *               is_active:
+ *                 type: bool
+ *                 example: true
  *     responses:
  *       201:
  *         description: User created successfully

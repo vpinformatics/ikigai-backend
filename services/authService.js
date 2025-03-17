@@ -12,6 +12,8 @@ exports.register = async ({ email, password, role_id, created_by }) => {
   const user = {
     email,
     password: hashedPassword,
+    name,
+    is_active,
     role_id,
     created_by,
     created_on: new Date(),
@@ -38,8 +40,8 @@ exports.login = async ({ email, password }) => {
     throw new Error('Invalid credentials');
   }
 
-  const token = generateToken(user);
-  const refreshToken = generateToken(user,'refresh');
+  const token = generateToken('token', user.id, user.email, user.role_id);
+  const refreshToken = generateToken('refresh', user.id, user.email, user.role_id);
 
   return { token, refreshToken, userInfo: { userId: user.id, email: user.email, role: user.role_id } };
 };
@@ -47,8 +49,8 @@ exports.login = async ({ email, password }) => {
 exports.refreshTokens = async ({ refreshToken }) => {
   try {
     const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
-    const token = jwt.sign({ userId: decoded.userId, role: decoded.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    const newRefreshToken = jwt.sign({ userId: decoded.userId, role: decoded.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const token = generateToken('token', decoded.id, decoded.email, decoded.role_id);
+    const newRefreshToken = generateToken('refresh', decoded.id, decoded.email, decoded.role_id);
 
     return { token, refreshToken: newRefreshToken };
   } catch (err) {
@@ -138,15 +140,11 @@ exports.verifyEmail = async ({ token }) => {
   }
 };
 
-function generateToken(user, type) {
-  var expiredIn = '1h';
+function generateToken(type, id, email, role_id) {
+  var expiredIn = '15m';
   if (type === 'refresh') {
-    expiredIn = '7d';
+    expiredIn = '1h';
   }
-  const payload = {
-      id: user.id,
-      email: user.email,
-      role_id: user.role_id
-  };
-  return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
+  const payload = { id, email, role_id };
+  return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: expiredIn });
 }

@@ -4,8 +4,9 @@ function authorize(roles = []) {
     // roles param can be a single role string (e.g. 'Admin') or an array of roles (e.g. ['Admin', 'Supervisor'])
     if (typeof roles === 'string') {
         roles = [roles];
+    } else if(Array.isArray(roles) && roles.length == 0) {
+        
     }
-
     return [
         // authenticate JWT token and attach user to request object (req.user)
         passport.authenticate('jwt', { session: false }),

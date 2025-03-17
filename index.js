@@ -4,9 +4,11 @@ dotenv.config(); // Load environment variables from .env file as the very first 
 const cors = require('cors');
 const db = require('./config/database');
 const swaggerUi = require('swagger-ui-express');
-const swaggerSpec = require('./config/swaggerConfig');
+const swaggerRouter = require('./config/swaggerConfig');
 const authRoutes = require('./routes/auth');
 const clientRoutes = require('./routes/client');
+const userRoutes = require('./routes/user');
+const roleRoutes = require('./routes/role');
 const { errorHandler } = require('./middlewares/errorHandler');
 const jwt = require('jsonwebtoken'); // Import jsonwebtoken
 
@@ -27,11 +29,13 @@ db.getConnection((err) => {
 });
 
 // Swagger UI setup
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use(swaggerRouter);
 
 // Routes
 app.use('/v1/auth', authRoutes);
 app.use('/v1/clients', clientRoutes);
+app.use('/v1/users', userRoutes);
+app.use('/v1/roles', roleRoutes);
 
 // Error handling middleware
 app.use(errorHandler);
