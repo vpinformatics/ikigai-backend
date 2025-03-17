@@ -142,10 +142,16 @@ router.post('/', authorize([1, 2]), userController.createUser);
  *                 type: string
  *               email:
  *                 type: string
- *               role:
- *                 type: string
+ *               role_id:
+ *                 type: integer
  *               is_active:
  *                 type: boolean
+ *               isUpdatePassword:
+ *                 type: boolean
+ *               password:
+ *                 type: string
+ *               userId:
+ *                 type: integer
  *     responses:
  *       200:
  *         description: User updated
@@ -160,8 +166,8 @@ router.post('/', authorize([1, 2]), userController.createUser);
  *                   type: string
  *                 email:
  *                   type: string
- *                 role:
- *                   type: string
+ *                 role_id:
+ *                   type: integer
  *                 is_active:
  *                   type: boolean
  */

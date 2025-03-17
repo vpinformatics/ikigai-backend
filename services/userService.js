@@ -111,13 +111,20 @@ exports.createUser = async (userData, userId) => {
 
 
 exports.updateUser = async (id, userData, userId) => {
-  const { name, email, city, password, role_id, is_active, contact_email, contact_phone, gst_number } = userData;
-  const hashedPassword = await bcrypt.hash(password, 12);
+  const { name, email, password, role_id, is_active, isUpdatePassword } = userData;
+  const hashedPassword = isUpdatePassword?await bcrypt.hash(password, 12):'';
 
   await pool.query(
-    'UPDATE users SET name = ?, email = ?, password = ?,  role_id = ?, is_active = ? WHERE id = ?  AND is_deleted = FALSE',
-    [name, email, hashedPassword, role_id, is_active, id]
+    'UPDATE users SET name = ?, email = ?, role_id = ?, is_active = ? WHERE id = ?  AND is_deleted = FALSE',
+    [name, email, role_id, is_active, id]
   );
+
+  if(isUpdatePassword){
+    await pool.query(
+      'UPDATE users SET password = ? WHERE id = ?  AND is_deleted = FALSE',
+      [ hashedPassword, id]
+    );
+  } 
 
   return {
     id,
