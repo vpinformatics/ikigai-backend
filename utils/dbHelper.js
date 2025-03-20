@@ -12,12 +12,12 @@ async function executeTransaction(transactionCallback) {
         if (!connection) throw new Error('Database connection failed');
 
         await connection.beginTransaction(); // ✅ Start transaction
-        console.log('🚀 Transaction Started');
+        //console.log('🚀 Transaction Started');
 
         const result = await transactionCallback(connection);
 
         await connection.commit(); // ✅ Commit Transaction
-        console.log('✅ Transaction Committed');
+        //console.log('✅ Transaction Committed');
         return result;
     } catch (error) {
         if (connection) await connection.rollback(); // ❌ Rollback Transaction
@@ -25,7 +25,7 @@ async function executeTransaction(transactionCallback) {
         throw error;
     } finally {
         if (connection) connection.release(); // 🔄 Release Connection
-        console.log('🔄 Connection Released');
+        //console.log('🔄 Connection Released');
     }
 }
 

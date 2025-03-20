@@ -11,7 +11,7 @@ passport.use(
   new Strategy(options, async (payload, done) => {
     try {
       const query = 'SELECT * FROM users WHERE id = ?';
-      const results = await db.query(query, [payload.id]);
+      const [results] = await db.query(query, [payload.id]);
 
       if (!Array.isArray(results)) {
         throw new Error('Query did not return an array');

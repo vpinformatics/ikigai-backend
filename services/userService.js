@@ -65,15 +65,14 @@ exports.getAllUsers = async (filters, sort, page, limit) => {
   let totalPages = 0;
   let offset = 0;
   if (page && limit) {
-    const countResult = await pool.query(countQuery, countParams);
+    const [countResult] = await pool.query(countQuery, countParams);
     totalRecords = countResult[0].count;
     totalPages = Math.ceil(totalRecords / limit);
     offset = (page - 1) * limit;
     query += ` LIMIT ? OFFSET ?`;
     queryParams.push(limit, offset);
   }
-console.log(query);
-  const users = await pool.query(query, queryParams);
+  const [users] = await pool.query(query, queryParams);
 
   return {
     users,
@@ -88,14 +87,14 @@ console.log(query);
 };
 
 exports.getUserById = async (id) => {
-  const users = await pool.query('SELECT * FROM users WHERE id = ? AND is_deleted = FALSE', [id]);
+  const [users] = await pool.query('SELECT * FROM users WHERE id = ? AND is_deleted = FALSE', [id]);
   return users;
 };
 
 exports.createUser = async (userData, userId) => {
   const { name, email, is_active, password, role_id } = userData;
   const hashedPassword = await bcrypt.hash(password, 12);
-  const result = await pool.query(
+  const [result] = await pool.query(
     'INSERT INTO users (name, email, is_active, password, role_id, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?)',
     [name, email, is_active, hashedPassword, role_id, userId, userId]
   );
@@ -136,5 +135,5 @@ exports.updateUser = async (id, userData, userId) => {
 };
 
 exports.deleteUser = async (id) => {
-  await pool.query('DELETE FROM Users WHERE id = ? AND is_deleted = FALSE', [id]);
+  await pool.query('UPDATE users SET is_deleted = TRUE WHERE id = ? AND is_deleted = FALSE', [id]);
 };

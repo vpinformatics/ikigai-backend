@@ -57,7 +57,7 @@ const { authorize } = require('../middlewares/authMiddleware');
  *                     type: string
  *                     format: date-time
  */
-router.get('/:client_id', authorize([1]), partController.getParts);
+router.get('/:client_id', authorize([1, 2]), partController.getParts);
 
 /**
  * @swagger

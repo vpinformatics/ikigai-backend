@@ -2,9 +2,7 @@ const serviceContractService = require('../services/serviceContractService');
 
 exports.getAllServiceContracts = async (req, res) => {
     try {
-        console.log(1);
-        const serviceContracts = await serviceContractService.getAllServiceContracts();
-        console.log(1.2);
+        const serviceContracts = await serviceContractService.getAllServiceContracts(req.params.client_id);
         res.status(200).json(serviceContracts);
     } catch (error) {
         console.error("Error fetching service contracts:", error);
@@ -15,14 +13,14 @@ exports.getAllServiceContracts = async (req, res) => {
 exports.createServiceContract = async (req, res) => {
     try {
         const userId = req.user.id;
-        console.log('📥 Received Request:', req.body);
+        //console.log('📥 Received Request:', req.body);
         const { client_id, service_contract_reference, service_contract_date, isSinglePart, partId, activityTypes } = req.body;
 
         if (!client_id || !service_contract_reference || !service_contract_date || !activityTypes) {
             return res.status(400).json({ error: "Missing required fields" });
         }
 
-        console.log("Activity Types:", activityTypes); // Log the activityTypes array
+        //console.log("Activity Types:", activityTypes); // Log the activityTypes array
 
         if (!Array.isArray(activityTypes)) {
             return res.status(400).json({ error: "activityTypes must be an array" });

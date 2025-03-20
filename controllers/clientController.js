@@ -49,7 +49,8 @@ exports.updateClient = async (req, res, next) => {
 
 exports.deleteClient = async (req, res, next) => {
   try {
-    await clientService.deleteClient(req.params.id);
+    const userId = req.user.id;
+    await clientService.deleteClient(req.params.id, userId);
     res.status(204).json({});
   } catch (error) {
     next(error);

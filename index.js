@@ -12,21 +12,16 @@ const userRoutes = require('./routes/userRoutes');
 const roleRoutes = require('./routes/roleRoutes');
 const WorkPlaceRoutes = require('./routes/workPlaceRoutes');
 const workShiftRoutes = require('./routes/workShiftRoutes');
+const partRoutes  = require('./routes/partRoute');
+const serviceContractRoutes  = require('./routes/serviceContractRoutes');
+const activityTypeRoutes = require('./routes/activityTypeRoutes');
+
 const app = express();
 
 // Enable CORS for all routes
 app.use(cors());
 
 app.use(express.json());
-
-// Test DB connection
-db.getConnection((err) => {
-  if (err) {
-    console.error('Database connection failed: ' + err.stack);
-    return;
-  }
-  console.log('Connected to database.');
-});
 
 // Swagger UI setup
 app.use(swaggerRouter);
@@ -38,6 +33,9 @@ app.use('/v1/users', userRoutes);
 app.use('/v1/roles', roleRoutes);
 app.use('/v1/workplace', WorkPlaceRoutes);
 app.use('/v1/workshift', workShiftRoutes);
+app.use('/v1/parts', partRoutes);
+app.use('/v1/service-contracts', serviceContractRoutes);
+app.use('/v1/activity-types', activityTypeRoutes);
 
 // Error handling middleware
 app.use(errorHandler);

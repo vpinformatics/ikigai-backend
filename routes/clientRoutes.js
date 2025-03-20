@@ -77,7 +77,7 @@ const { authorize } = require('../middlewares/authMiddleware');
  *                         type: string
  *                         enum: [active, inactive]
  */
-router.get('/', authorize([1]), clientController.getAllClients);
+router.get('/', authorize([1, 2]), clientController.getAllClients);
 
 /**
  * @swagger

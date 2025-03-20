@@ -12,15 +12,6 @@ exports.register = async (req, res, next) => {
 
 exports.login = async (req, res, next) => {
   try {
-    const resopnse = await authService.login(req.body);
-    res.status(200).json({ data: resopnse });
-  } catch (error) {
-    next(error);
-  }
-};
-
-exports.login = async (req, res, next) => {
-  try {
     const responseData = await authService.login(req.body);
 
     if (responseData) {
@@ -38,12 +29,15 @@ exports.logout = async (req, res, next) => {
   res.status(200).json({ success: true, message: 'Logout successful' });
 };
 
-exports.refreshTokens = async (req, res, next) => {
+exports.refreshTokens = async (req, res) => {
   try {
-    const tokens = await authService.refreshTokens(req.body);
-    res.status(200).json({ tokens });
+      //console.log('📥 Refresh token request received:', req.body.refreshToken);
+      const { refreshToken } = req.body;
+      const tokens = await authService.refreshTokens(refreshToken);
+      res.status(200).json(tokens);
   } catch (error) {
-    next(error);
+      //console.error('❌ Refresh token failed:', error.message);
+      res.status(401).json({ error: 'Unauthorized' });
   }
 };
 

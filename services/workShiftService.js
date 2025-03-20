@@ -1,13 +1,13 @@
 const pool = require('../config/database');
 
 exports.getAllWorkShifts = async (client_id) => {
-  const rows = await pool.query('SELECT * FROM work_shift WHERE client_id = ? AND is_deleted = 0', [client_id]);
-  return rows;
+  const [workShifts] = await pool.query('SELECT * FROM work_shift WHERE client_id = ? AND is_deleted = 0', [client_id]);
+  return workShifts;
 };
 
 exports.getWorkShiftById = async (id) => {
-  const [rows] = await pool.query('SELECT * FROM work_shift WHERE id = ? AND is_deleted = 0', [id]);
-  return rows[0];
+  const [workShift] = await pool.query('SELECT * FROM work_shift WHERE id = ? AND is_deleted = 0', [id]);
+  return workShift;
 };
 
 exports.createWorkShift = async (shift, userId) => {
@@ -15,7 +15,7 @@ exports.createWorkShift = async (shift, userId) => {
 
   try {
     // Execute query and correctly retrieve the result
-    const result = await pool.query(
+    const [result] = await pool.query(
       'INSERT INTO work_shift (client_id, name, shift_from, shift_to, break_from, break_to, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       [client_id, name, shift_from, shift_to, break_from, break_to, userId, userId]
     );

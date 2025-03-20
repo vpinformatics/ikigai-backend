@@ -53,7 +53,7 @@ const { authorize } = require('../middlewares/authMiddleware');
  *                     items:
  *                       type: integer
  */
-router.get('/', authorize([1, 2]), serviceContractController.getAllServiceContracts);
+router.get('/:client_id', authorize([1, 2]), serviceContractController.getAllServiceContracts);
 
 /**
  * @swagger

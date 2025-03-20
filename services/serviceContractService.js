@@ -1,10 +1,10 @@
 const pool = require('../config/database');
 const { executeTransaction } = require('../utils/dbHelper');
 
-exports.getAllServiceContracts = async () => {
+exports.getAllServiceContracts = async (client_id) => {
   try {
-    console.log(2);
-      const serviceContracts = await pool.query(`
+    console.log(client_id);
+      const [serviceContracts] = await pool.query(`
           SELECT 
               sc.id, 
               sc.client_id, 
@@ -15,10 +15,9 @@ exports.getAllServiceContracts = async () => {
               GROUP_CONCAT(sca.activity_type_id) AS activity_type_ids
           FROM service_contracts sc
           LEFT JOIN service_contract_activity sca ON sc.id = sca.service_contract_id
-          WHERE sc.is_deleted = 0
+          WHERE sc.is_deleted = 0 AND sc.client_id = ?
           GROUP BY sc.id
-      `);
-      console.log(3);
+      `,[client_id]);
       return serviceContracts;
   } catch (error) {
       throw error;
@@ -26,7 +25,7 @@ exports.getAllServiceContracts = async () => {
 };
 
 exports.createServiceContract = async (serviceContractData, userId) => {
-    console.log('🚀 Creating Service Contract with Transaction');
+    //console.log('🚀 Creating Service Contract with Transaction');
 
     return executeTransaction(async (connection) => {
         const { client_id, service_contract_date, isSinglePart, partId, activityTypes } = serviceContractData;
@@ -78,7 +77,7 @@ exports.createServiceContract = async (serviceContractData, userId) => {
             await connection.query(activityInsertQuery, [activityValues]);
         }
 
-        console.log('✅ Service Contract Created:', contractId);
+        //console.log('✅ Service Contract Created:', contractId);
         return { id: contractId, service_contract_reference };
     });
 };
@@ -98,7 +97,7 @@ exports.getServiceContractById = async (id) => {
 };
 
 exports.updateServiceContract = async (id, data, userId) => {
-    console.log('🚀 Updating Service Contract with Transaction');
+    //console.log('🚀 Updating Service Contract with Transaction');
 
     return executeTransaction(async (connection) => {
         const { service_contract_date, isSinglePart, partId, activityTypes } = data;
@@ -119,7 +118,7 @@ exports.updateServiceContract = async (id, data, userId) => {
             await connection.query(activityInsertQuery, [activityValues]);
         }
 
-        console.log('✅ Service Contract Updated:', id);
+        //console.log('✅ Service Contract Updated:', id);
         return { id };
     });
 };

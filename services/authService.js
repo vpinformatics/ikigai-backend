@@ -1,14 +1,16 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const db = require('../config/database');
+//const db = require('../config/database');
+const pool = require('../config/database'); // Use `pool` for async/await support
 const crypto = require('crypto');
 const util = require('util');
-const query = util.promisify(db.query).bind(db);
+//const query = util.promisify(db.query).bind(db);
 const sendEmail = require('../utils/sendEmail');
+const { generateToken } = require('../utils/authHelper');
 
 exports.register = async ({ email, password, role_id, created_by }) => {
   const hashedPassword = await bcrypt.hash(password, 12);
-  //const roleId = (await query('SELECT id FROM roles WHERE name = ?', [role]))[0].id;
+  //const roleId = (await pool.query('SELECT id FROM roles WHERE name = ?', [role]))[0].id;
   const user = {
     email,
     password: hashedPassword,
@@ -19,12 +21,52 @@ exports.register = async ({ email, password, role_id, created_by }) => {
     created_on: new Date(),
     updated_by: created_by
   };
-  await query('INSERT INTO users SET ?', user);
+  await pool.query('INSERT INTO users SET ?', user);
   return user;
 };
 
 exports.login = async ({ email, password }) => {
-  const results = await query('SELECT * FROM users WHERE email = ?', [email]);
+  //console.log('📥 Login request received:', email);
+
+  try {
+      // Fetch user from database
+      const [rows] = await pool.query('SELECT id, email, password, role_id FROM users WHERE email = ?', [email]);
+
+      if (!rows.length) {
+          //console.warn('⚠️ Invalid login attempt for email:', email);
+          throw new Error('Invalid credentials');
+      }
+
+      const user = rows[0];
+      //console.log('✅ User found:', user.email);
+
+      // Validate password
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+          console.warn('⚠️ Incorrect password attempt for:', email);
+          throw new Error('Invalid credentials');
+      }
+
+      // Generate tokens
+      const token = generateToken('token', user.id, user.email, user.role_id);
+      const refreshToken = generateToken('refresh', user.id, user.email, user.role_id);
+
+      //console.log('🔑 Tokens generated for:', user.email);
+
+      return { 
+          token, 
+          refreshToken, 
+          userInfo: { userId: user.id, email: user.email, role: user.role_id } 
+      };
+  } catch (error) {
+      //console.error('❌ Error during login:', error.message);
+      throw new Error('Authentication failed');
+  }
+};
+
+
+exports.login = async ({ email, password }) => {
+  const [results] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
   if (results.length === 0) {
     throw new Error('Invalid credentials');
   }
@@ -33,7 +75,6 @@ exports.login = async ({ email, password }) => {
   if (!user) {
     throw new Error('Invalid credentials');
   }
-
   const isMatch = await bcrypt.compare(password, user.password);
 
   if (!isMatch) {
@@ -46,20 +87,48 @@ exports.login = async ({ email, password }) => {
   return { token, refreshToken, userInfo: { userId: user.id, email: user.email, role: user.role_id } };
 };
 
-exports.refreshTokens = async ({ refreshToken }) => {
-  try {
-    const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
-    const token = generateToken('token', decoded.id, decoded.email, decoded.role_id);
-    const newRefreshToken = generateToken('refresh', decoded.id, decoded.email, decoded.role_id);
+/**
+ * Refreshes access and refresh tokens
+ * @param {string} refreshToken - The refresh token from the client
+ * @returns {Promise<{ token: string, refreshToken: string }>} - New tokens
+ */
+exports.refreshTokens = async (refreshToken) => {
+  //console.log('🔄 Refreshing tokens');
 
-    return { token, refreshToken: newRefreshToken };
-  } catch (err) {
-    throw new Error('Invalid refresh token');
+  if (!refreshToken) {
+      throw new Error('Refresh token is required');
+  }
+
+  try {
+      // Verify the refresh token
+      const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+      //console.log('✅ Refresh token verified for user:', decoded.email);
+
+      // Ensure user still exists
+      const [rows] = await pool.query('SELECT id, email, role_id FROM users WHERE id = ?', [decoded.userId]);
+
+      if (!rows.length) {
+          console.warn('⚠️ User not found for refresh token:', decoded.email);
+          throw new Error('Invalid refresh token');
+      }
+
+      const user = rows[0];
+
+      // Generate new tokens
+      const newToken = generateToken('token', user.id, user.email, user.role_id);
+      const newRefreshToken = generateToken('refresh', user.id, user.email, user.role_id);
+
+      //console.log('🔑 New tokens generated for:', user.email);
+
+      return { token: newToken, refreshToken: newRefreshToken };
+  } catch (error) {
+      //console.error('❌ Error refreshing tokens:', error.message);
+      throw new Error('Invalid or expired refresh token');
   }
 };
 
 exports.forgotPassword = async ({ email }) => {
-  const results = await query('SELECT * FROM users WHERE email = ?', [email]);
+  const [results] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
   const user = results[0];
 
   if (!user) {
@@ -69,7 +138,7 @@ exports.forgotPassword = async ({ email }) => {
   const resetToken = crypto.randomBytes(20).toString('hex');
   const resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
 
-  await query('UPDATE users SET resetPasswordToken = ?, resetPasswordExpire = ? WHERE email = ?', [resetToken, resetPasswordExpire, email]);
+  await pool.query('UPDATE users SET resetPasswordToken = ?, resetPasswordExpire = ? WHERE email = ?', [resetToken, resetPasswordExpire, email]);
 
   const resetUrl = `${process.env.FRONTEND_URL}/passwordreset/${resetToken}`;
 
@@ -86,13 +155,13 @@ exports.forgotPassword = async ({ email }) => {
       text: message
     });
   } catch (err) {
-    await query('UPDATE users SET resetPasswordToken = NULL, resetPasswordExpire = NULL WHERE email = ?', [email]);
+    await pool.query('UPDATE users SET resetPasswordToken = NULL, resetPasswordExpire = NULL WHERE email = ?', [email]);
     throw new Error('Email could not be sent');
   }
 };
 
 exports.resetPassword = async ({ token, newPassword }) => {
-  const results = await query('SELECT * FROM users WHERE resetPasswordToken = ? AND resetPasswordExpire > ?', [token, Date.now()]);
+  const [results] = await pool.query('SELECT * FROM users WHERE resetPasswordToken = ? AND resetPasswordExpire > ?', [token, Date.now()]);
   const user = results[0];
 
   if (!user) {
@@ -100,11 +169,11 @@ exports.resetPassword = async ({ token, newPassword }) => {
   }
 
   const hashedPassword = await bcrypt.hash(newPassword, 12);
-  await query('UPDATE users SET password = ?, resetPasswordToken = NULL, resetPasswordExpire = NULL WHERE id = ?', [hashedPassword, user.id]);
+  await pool.query('UPDATE users SET password = ?, resetPasswordToken = NULL, resetPasswordExpire = NULL WHERE id = ?', [hashedPassword, user.id]);
 };
 
 exports.sendVerificationEmail = async ({ email }) => {
-  const results = await query('SELECT * FROM users WHERE email = ?', [email]);
+  const [results] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
   const user = results[0];
 
   if (!user) {
@@ -134,17 +203,8 @@ exports.sendVerificationEmail = async ({ email }) => {
 exports.verifyEmail = async ({ token }) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    await query('UPDATE users SET isVerified = 1 WHERE id = ?', [decoded.userId]);
+    await pool.query('UPDATE users SET isVerified = 1 WHERE id = ?', [decoded.userId]);
   } catch (err) {
     throw new Error('Invalid or expired token');
   }
 };
-
-function generateToken(type, id, email, role_id) {
-  var expiredIn = '15m';
-  if (type === 'refresh') {
-    expiredIn = '1h';
-  }
-  const payload = { id, email, role_id };
-  return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: expiredIn });
-}

@@ -1,15 +1,15 @@
 const pool = require('../config/database');
 
 exports.getParts = async (client_id) => {
-    const rows = await pool.query(
+    const [parts] = await pool.query(
         'SELECT * FROM parts WHERE client_id = ? AND is_deleted = 0', 
         [client_id]
     );
-    return rows;
+    return parts;
 };
 
 exports.addPart = async ({ part_number, part_code, client_id, userId }) => {
-    const result = await pool.query(
+    const [result] = await pool.query(
         'INSERT INTO parts (part_number, part_code, client_id, created_by, updated_by) VALUES (?, ?, ?, ?, ?)', 
         [part_number, part_code, client_id, userId, userId]
     );
