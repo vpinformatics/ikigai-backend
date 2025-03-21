@@ -12,11 +12,14 @@ exports.getAllServiceContracts = async (client_id) => {
               sc.service_contract_date, 
               sc.is_single_part, 
               sc.part_id, 
+              sc.work_place_id, 
+              wp.name AS work_place_name, 
               GROUP_CONCAT(sca.activity_type_id) AS activity_type_ids
           FROM service_contracts sc
           LEFT JOIN service_contract_activity sca ON sc.id = sca.service_contract_id
+          LEFT JOIN work_place wp ON sc.work_place_id = wp.id
           WHERE sc.is_deleted = 0 AND sc.client_id = ?
-          GROUP BY sc.id
+          GROUP BY sc.id, wp.id, wp.name;
       `,[client_id]);
       return serviceContracts;
   } catch (error) {
@@ -28,7 +31,7 @@ exports.createServiceContract = async (serviceContractData, userId) => {
     //console.log('🚀 Creating Service Contract with Transaction');
 
     return executeTransaction(async (connection) => {
-        const { client_id, service_contract_date, isSinglePart, partId, activityTypes } = serviceContractData;
+        const { client_id, service_contract_date, isSinglePart, partId, activityTypes, work_place_id } = serviceContractData;
 
         const currentYear = new Date().getFullYear();
         const currentMonth = new Date().getMonth() + 1;
@@ -55,8 +58,8 @@ exports.createServiceContract = async (serviceContractData, userId) => {
 
         // Step 4️⃣: Insert service contract
         const contractInsertQuery = `
-            INSERT INTO service_contracts (client_id, service_contract_reference, service_contract_date, is_single_part, part_id, created_by, updated_by)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO service_contracts (client_id, service_contract_reference, service_contract_date, is_single_part, part_id, created_by, updated_by, work_place_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `;
         const [result] = await connection.query(contractInsertQuery, [
             client_id,
@@ -65,7 +68,8 @@ exports.createServiceContract = async (serviceContractData, userId) => {
             isSinglePart,
             partId,
             userId,
-            userId
+            userId,
+            work_place_id
         ]);
 
         const contractId = result.insertId;
@@ -100,12 +104,12 @@ exports.updateServiceContract = async (id, data, userId) => {
     //console.log('🚀 Updating Service Contract with Transaction');
 
     return executeTransaction(async (connection) => {
-        const { service_contract_date, isSinglePart, partId, activityTypes } = data;
+        const { service_contract_date, isSinglePart, partId, activityTypes, work_place_id } = data;
 
         // Step 1️⃣: Update the service contract
         await connection.query(
-            `UPDATE service_contracts SET service_contract_date = ?, is_single_part = ?, part_id = ?, updated_by = ? WHERE id = ?`,
-            [service_contract_date, isSinglePart, partId, userId, id]
+            `UPDATE service_contracts SET service_contract_date = ?, is_single_part = ?, part_id = ?, updated_by = ?, work_place_id = ? WHERE id = ?`,
+            [service_contract_date, isSinglePart, partId, userId, work_place_id, id]
         );
 
         // Step 2️⃣: Delete existing activity types
