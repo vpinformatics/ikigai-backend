@@ -16,6 +16,19 @@ const options = {
         url: 'http://localhost:3100/v1',
       },
     ],
+    tags: [
+      { name: 'Auth', description: 'Authentication and authorization endpoints' },
+      { name: 'Users', description: 'API for managing users' },
+      { name: 'Roles', description: 'API for role management' },
+      { name: 'Activity Types', description: 'API for activity types' },
+      { name: 'Clients', description: 'API for managing clients' },
+      { name: 'WorkPlace', description: 'API for workplace management' },
+      { name: 'Work Shifts', description: 'API for managing work shifts' },
+      { name: 'Parts', description: 'API for managing parts' },
+      { name: 'Service Contracts', description: 'API endpoints for managing service contracts' },
+      { name: 'Activity Details', description:'API for managing activity details'},
+      { name: 'Activity Data', description: 'API for managing activity data'}
+    ],
     components: {
       securitySchemes: {
         bearerAuth: {

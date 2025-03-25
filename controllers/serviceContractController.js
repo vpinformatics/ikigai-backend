@@ -63,3 +63,13 @@ exports.deleteServiceContract = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+exports.getServiceContractData = async (req, res) => {
+    try {
+        console.log(req.params.client_id, req.params.id);
+        const serviceContracts = await serviceContractService.getServiceContractData(req.params.client_id, req.params.id);
+        res.status(200).json(serviceContracts);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};

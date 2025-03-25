@@ -108,7 +108,6 @@ exports.createUser = async (userData, userId) => {
   };
 };
 
-
 exports.updateUser = async (id, userData, userId) => {
   const { name, email, password, role_id, is_active, isUpdatePassword } = userData;
   const hashedPassword = isUpdatePassword?await bcrypt.hash(password, 12):'';

@@ -2,8 +2,6 @@ const express = require('express');
 const dotenv = require('dotenv');
 dotenv.config(); // Load environment variables from .env file as the very first step
 const cors = require('cors');
-const db = require('./config/database');
-const swaggerUi = require('swagger-ui-express');
 const swaggerRouter = require('./config/swaggerConfig');
 const { errorHandler } = require('./middlewares/errorHandler');
 const authRoutes = require('./routes/authRoutes');
@@ -15,6 +13,10 @@ const workShiftRoutes = require('./routes/workShiftRoutes');
 const partRoutes  = require('./routes/partRoute');
 const serviceContractRoutes  = require('./routes/serviceContractRoutes');
 const activityTypeRoutes = require('./routes/activityTypeRoutes');
+const activityDataRoutes = require("./routes/activityData.routes");
+const activityDetailsRoutes = require("./routes/activityDetails.routes");
+
+const { exec } = require('child_process');
 
 const app = express();
 
@@ -36,6 +38,8 @@ app.use('/v1/workshift', workShiftRoutes);
 app.use('/v1/parts', partRoutes);
 app.use('/v1/service-contracts', serviceContractRoutes);
 app.use('/v1/activity-types', activityTypeRoutes);
+app.use("/v1/activity-data", activityDataRoutes);
+app.use("/v1/activity-details", activityDetailsRoutes);
 
 // Error handling middleware
 app.use(errorHandler);
@@ -43,4 +47,12 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 3100;
 app.listen(PORT, () => {
   console.log(`Server started on port ${PORT}`);
+
+  const url = `http://localhost:${PORT}/api-docs`;
+  switch (process.platform) {
+      case 'darwin': exec(`open ${url}`); break; // macOS
+      case 'win32': exec(`start ${url}`); break; // Windows
+      case 'linux': exec(`xdg-open ${url}`); break; // Linux
+      default: console.log(`Please open manually: ${url}`);
+  }
 });

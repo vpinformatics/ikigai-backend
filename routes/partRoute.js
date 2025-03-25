@@ -99,7 +99,7 @@ router.get('/:client_id', authorize([1, 2]), partController.getParts);
  *                 created_by:
  *                   type: integer
  */
-router.post('/', authorize([1]), partController.addPart);
+router.post('/', authorize([1, 2]), partController.addPart);
 
 /**
  * @swagger

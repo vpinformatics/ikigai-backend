@@ -3,7 +3,6 @@ const { executeTransaction } = require('../utils/dbHelper');
 
 exports.getAllServiceContracts = async (client_id) => {
   try {
-    console.log(client_id);
       const [serviceContracts] = await pool.query(`
           SELECT 
               sc.id, 
@@ -106,13 +105,13 @@ exports.updateServiceContract = async (id, data, userId) => {
     return executeTransaction(async (connection) => {
         const { service_contract_date, isSinglePart, partId, activityTypes, work_place_id } = data;
 
-        // Step 1️⃣: Update the service contract
+        // console.log('Step 1️⃣: Update the service contract');
         await connection.query(
             `UPDATE service_contracts SET service_contract_date = ?, is_single_part = ?, part_id = ?, updated_by = ?, work_place_id = ? WHERE id = ?`,
             [service_contract_date, isSinglePart, partId, userId, work_place_id, id]
         );
 
-        // Step 2️⃣: Delete existing activity types
+        // console.log('Step 2️⃣: Delete existing activity types');
         await connection.query(`DELETE FROM service_contract_activity WHERE service_contract_id = ?`, [id]);
 
         // Step 3️⃣: Insert new activity types (if any)
@@ -122,11 +121,37 @@ exports.updateServiceContract = async (id, data, userId) => {
             await connection.query(activityInsertQuery, [activityValues]);
         }
 
-        //console.log('✅ Service Contract Updated:', id);
+        // console.log('✅ Service Contract Updated:', id);
         return { id };
     });
 };
 
 exports.deleteServiceContract = async (id) => {
     await pool.query(`UPDATE service_contracts SET is_deleted = 1, deleted_on = NOW() WHERE id = ?`, [id]);
+};
+
+exports.getServiceContractData = async (client_id, id) => {
+    try {
+        console.log('***',client_id, id);
+        const [serviceContracts] = await pool.query(`
+        SELECT 
+            c.name as clientName,
+            c.contact_person,
+            c.contact_phone,
+            c.contact_email,
+            c.gst_number,
+            sc.service_contract_reference, 
+            sc.service_contract_date, 
+            wp.name AS work_place_name
+        FROM service_contracts sc
+        INNER JOIN clients c ON c.id = sc.client_id
+        LEFT JOIN service_contract_activity sca ON sc.id = sca.service_contract_id
+        LEFT JOIN work_place wp ON sc.work_place_id = wp.id
+        WHERE sc.is_deleted = 0 AND sc.client_id = ? AND sc.id = ?
+          `, [client_id, id]);
+          console.log(serviceContracts);
+          return serviceContracts;
+    } catch (error) {
+        throw error;
+    }
 };

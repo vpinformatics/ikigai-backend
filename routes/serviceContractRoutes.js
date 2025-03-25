@@ -156,7 +156,7 @@ router.get('/:id', authorize([1, 2]), serviceContractController.getServiceContra
  *                   items:
  *                     type: integer
  */
-router.post('/', authorize([1, 2]), serviceContractController.createServiceContract);
+router.post('/:id', authorize([1, 2]), serviceContractController.createServiceContract);
 
 /**
  * @swagger
@@ -243,5 +243,7 @@ router.put('/:id', authorize([1, 2]), serviceContractController.updateServiceCon
  *         description: Service contract deleted
  */
 router.delete('/:id', authorize([1, 2]), serviceContractController.deleteServiceContract);
+
+router.get('/:client_id/:id', authorize([1, 2]), serviceContractController.getServiceContractData);
 
 module.exports = router;
