@@ -132,7 +132,6 @@ exports.deleteServiceContract = async (id) => {
 
 exports.getServiceContractData = async (client_id, id) => {
     try {
-        console.log('***',client_id, id);
         const [serviceContracts] = await pool.query(`
         SELECT 
             c.name as clientName,
@@ -149,7 +148,6 @@ exports.getServiceContractData = async (client_id, id) => {
         LEFT JOIN work_place wp ON sc.work_place_id = wp.id
         WHERE sc.is_deleted = 0 AND sc.client_id = ? AND sc.id = ?
           `, [client_id, id]);
-          console.log(serviceContracts);
           return serviceContracts;
     } catch (error) {
         throw error;

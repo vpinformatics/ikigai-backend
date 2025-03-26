@@ -11,8 +11,8 @@ exports.createActivityDetail = async (req, res) => {
 
 exports.getActivityDetailsByActivityId = async (req, res) => {
     try {
-        const { activity_id } = req.params;
-        const details = await ActivityDetailsService.getActivityDetailsByActivityId(activity_id);
+        const { activity_details_id } = req.params;
+        const details = await ActivityDetailsService.getActivityDetailsByActivityId(activity_details_id);
         res.json(details);
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -21,8 +21,9 @@ exports.getActivityDetailsByActivityId = async (req, res) => {
 
 exports.updateActivityDetail = async (req, res) => {
     try {
+        const userId = req.user.id;
         const { id } = req.params;
-        await ActivityDetailsService.updateActivityDetail(id, req.body);
+        await ActivityDetailsService.updateActivityDetail(id, req.body, userId);
         res.json({ message: "Activity detail updated successfully" });
     } catch (err) {
         res.status(500).json({ message: err.message });

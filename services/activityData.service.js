@@ -1,15 +1,15 @@
 const pool = require('../config/database');
 exports.getAllActivities = async (userId, service_contract_id, filters, sort, page, limit) => {
   try {
-    console.log(sort);
-    console.log(1);
     const queryParams = [];
     const countParams = [];
     
     let query = `
         SELECT 
+            sc.client_id,
             ad.id AS activity_id,
             ad.service_contract_id,
+            adtl.id AS activity_details_id,
             ats.name as 'activity_type',
             ad.activity_date,
             p.part_number,
@@ -22,7 +22,8 @@ exports.getAllActivities = async (userId, service_contract_id, filters, sort, pa
             rejection_percent,
             remarks
         FROM activity_data ad
-        Inner Join activity_types ats on ats.id = ad.activity_type_id
+        INNER JOIN service_contracts sc ON sc.id = ad.service_contract_id
+        INNER JOIN activity_types ats on ats.id = ad.activity_type_id
         INNER JOIN activity_details adtl ON adtl.activity_id = ad.id
         INNER JOIN parts p ON p.id = adtl.part_id
         INNER JOIN work_shift ws ON ws.id = adtl.work_shift_id
@@ -49,8 +50,6 @@ exports.getAllActivities = async (userId, service_contract_id, filters, sort, pa
     queryParams.push(service_contract_id);
     countParams.push(service_contract_id);
     
-    console.log(2);
-
     // **Apply Filters**
     if (filters) {
         Object.keys(filters).forEach((key) => {
@@ -92,8 +91,6 @@ exports.getAllActivities = async (userId, service_contract_id, filters, sort, pa
         query += ` ORDER BY ${sortField} ${sortOrder}`;
     }
     
-    console.log(3);
-
     // **Apply Pagination**
     let totalRecords = 0;
     let totalPages = 0;
@@ -107,13 +104,7 @@ exports.getAllActivities = async (userId, service_contract_id, filters, sort, pa
         queryParams.push(limit, offset);
     }
     
-    console.log(4);
-console.log(query);
-console.table(queryParams);
-console.log(4);
     const [activities] = await pool.query(query, queryParams);
-
-    console.log(5);
 
     return {
         activities,
@@ -134,15 +125,6 @@ console.log(4);
   exports.getActivityById = async(id) => {
     const [rows] = await pool.query("SELECT * FROM activity_data WHERE id = ? AND is_deleted = 0", [id]);
     return rows[0];
-  }
-
-  exports.createActivity = async(data) => {
-    const { service_contract_id, activity_date, activity_type_id, created_by } = data;
-    const [result] = await pool.query(
-      "INSERT INTO activity_data (service_contract_id, activity_date, activity_type_id, created_by) VALUES (?, ?, ?, ?)",
-      [service_contract_id, activity_date, activity_type_id, created_by]
-    );
-    return result.insertId;
   }
 
   exports.createActivity = async (data) => {
@@ -177,4 +159,16 @@ console.log(4);
 
   exports.deleteActivity= async(id) => {
     await pool.query("UPDATE activity_data SET is_deleted = 1, deleted_on = NOW() WHERE id = ?", [id]);
+  }
+
+  exports.checkActivityByDateAndType = async(service_contract_id, activity_date, activity_type_id) => {
+    const [rows] = await pool.query(`
+      SELECT id 
+      FROM activity_data 
+      WHERE service_contract_id = ? 
+        AND activity_date=?
+        AND activity_type_id = ? 
+        AND is_deleted = 0
+      `, [service_contract_id, activity_date, activity_type_id]);
+    return (rows.length > 0) ? rows[0].id: null; 
   }

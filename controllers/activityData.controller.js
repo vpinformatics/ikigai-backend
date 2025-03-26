@@ -41,7 +41,20 @@ exports.createActivity = async (req, res) => {
 
 exports.updateActivity = async (req, res) => {
   try {
-    await ActivityDataService.updateActivity(req.params.id, req.body);
+    const userId = req.user.id;
+
+    const { service_contract_id, activity_date, activity_type_id } = req.body;
+
+    let activityId = await ActivityDataService.checkActivityByDateAndType(service_contract_id, activity_date, activity_type_id);
+     
+    if(!activityId){
+      activityId = await ActivityDataService.createActivity(req.body);
+    }
+    
+    data = {activity_id: activityId, id: req.body.activity_detail_id , ...req.body}
+    
+    await ActivityDetailsService.updateActivityDetail(activityId, data, userId);
+    
     res.json({ message: "Activity updated" });
   } catch (err) {
     res.status(500).json({ message: err.message });

@@ -102,7 +102,7 @@ router.post("/", authorize([1, 2]), activityDetailsController.createActivityDeta
  *                   remarks:
  *                     type: string
  */
-router.get("/:activity_id", authorize([1, 2]), activityDetailsController.getActivityDetailsByActivityId);
+router.get("/:activity_details_id", authorize([1, 2]), activityDetailsController.getActivityDetailsByActivityId);
 
 /**
  * @swagger

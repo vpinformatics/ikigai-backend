@@ -66,7 +66,6 @@ exports.deleteServiceContract = async (req, res) => {
 
 exports.getServiceContractData = async (req, res) => {
     try {
-        console.log(req.params.client_id, req.params.id);
         const serviceContracts = await serviceContractService.getServiceContractData(req.params.client_id, req.params.id);
         res.status(200).json(serviceContracts);
     } catch (error) {
