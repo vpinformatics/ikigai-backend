@@ -105,7 +105,7 @@ exports.refreshTokens = async (refreshToken) => {
       //console.log('✅ Refresh token verified for user:', decoded.email);
 
       // Ensure user still exists
-      const [rows] = await pool.query('SELECT id, email, role_id FROM users WHERE id = ?', [decoded.userId]);
+      const [rows] = await pool.query('SELECT id, email, role_id FROM users WHERE id = ?', [decoded.id]);
 
       if (!rows.length) {
           console.warn('⚠️ User not found for refresh token:', decoded.email);
