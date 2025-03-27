@@ -91,6 +91,25 @@ exports.getUserById = async (id) => {
   return users;
 };
 
+exports.getUserById = async (id) => {
+  const [users] = await pool.query(
+    `SELECT * FROM users WHERE id = ? AND is_deleted = FALSE`,
+    [id]
+  );
+
+  if (!users.length) return null; // If user not found
+
+  const [assignedClients] = await pool.query(
+    `SELECT client_id FROM user_clients WHERE user_id = ? AND is_deleted = FALSE`,
+    [id]
+  );
+
+  // Attach assigned clients to user
+  users[0].assignedClients = assignedClients.map(client => client.client_id);
+
+  return users[0];
+};
+
 exports.createUser = async (userData, userId) => {
   const { name, email, is_active, password, role_id } = userData;
   const hashedPassword = await bcrypt.hash(password, 12);
