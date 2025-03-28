@@ -54,5 +54,14 @@ exports.deleteUser = async (req, res, next) => {
     res.status(204).json({});
   } catch (error) {
     next(error);
-  }
+  } 
 };
+
+exports.getUsersByClinetId = async (req, res, next) => {
+  try{
+      const data = await userService.getUsersByClinetId(req.params.client_id);
+      res.status(200).json({ data });
+  } catch (error) {
+    next(error);
+  }
+}

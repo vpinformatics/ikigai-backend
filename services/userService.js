@@ -91,6 +91,21 @@ exports.getUserById = async (id) => {
   return users;
 };
 
+exports.getUsersByClinetId = async (client_id) => {
+  const [users] = await pool.query(`
+    SELECT 
+      u.id as 'user_id', u.name as 'user_name', u.email, 
+      u.role_id, r.name as 'role_name'
+      ,uc.id as 'user_client_id'
+    FROM user_clients uc
+    INNER JOIN users u ON u.id = uc.user_id
+    INNER JOIN roles r ON r.id = u.role_id
+    WHERE u.is_deleted = 0 AND uc.is_deleted = 0
+    AND u.is_active = 1 AND uc.client_id = ?
+    `, [client_id]);
+  return users;
+};
+
 exports.getUserById = async (id) => {
   const [users] = await pool.query(
     `SELECT * FROM users WHERE id = ? AND is_deleted = FALSE`,

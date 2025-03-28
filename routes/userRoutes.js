@@ -193,4 +193,6 @@ router.put('/:id', authorize([1, 2]), userController.updateUser);
  */
 router.delete('/:id', authorize([1, 2]), userController.deleteUser);
 
+router.get('/get-users-by-clinetId/:client_id', authorize([1, 2]), userController.getUsersByClinetId);
+
 module.exports = router;

@@ -17,6 +17,16 @@ exports.getAllActivities = async (req, res) => {
   }
 };
 
+exports.getAllDates = async (req,res) => {
+  try {
+    const { service_contract_id } = req.params;
+    const data = await ActivityDataService.getAllDates(service_contract_id);
+    return res.status(200).json({ success: true, data: data });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
+
 exports.getActivityById = async (req, res) => {
   try {
     const activity = await ActivityDataService.getActivityById(req.params.id);

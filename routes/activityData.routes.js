@@ -182,4 +182,6 @@ router.put("/:id", authorize([1, 2]), activityDataController.updateActivity);
  */
 router.delete("/:id", authorize([1, 2]), activityDataController.deleteActivity);
 
+router.get("/get-all-dates/:service_contract_id", authorize([1, 2]), activityDataController.getAllDates);
+
 module.exports = router;

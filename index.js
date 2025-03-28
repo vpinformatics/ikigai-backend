@@ -15,6 +15,8 @@ const serviceContractRoutes  = require('./routes/serviceContractRoutes');
 const activityTypeRoutes = require('./routes/activityTypeRoutes');
 const activityDataRoutes = require("./routes/activityData.routes");
 const activityDetailsRoutes = require("./routes/activityDetails.routes");
+const userClientsRouts = require("./routes/userClientRoutes");
+const activityTimeRoutes = require("./routes/activityTimeRoutes");
 
 const { exec } = require('child_process');
 
@@ -40,6 +42,8 @@ app.use('/v1/service-contracts', serviceContractRoutes);
 app.use('/v1/activity-types', activityTypeRoutes);
 app.use("/v1/activity-data", activityDataRoutes);
 app.use("/v1/activity-details", activityDetailsRoutes);
+app.use('/v1/user-clients', userClientsRouts);
+app.use('/v1/activity-time', activityTimeRoutes);
 
 // Error handling middleware
 app.use(errorHandler);
