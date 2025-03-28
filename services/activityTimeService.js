@@ -1,63 +1,135 @@
 const pool = require("../config/database");
 
 // Get all activity time records with optional filters, sorting, and pagination
-exports.getAllActivityTimes = async (filters, sort, page, limit) => {
+exports.getAllActivityTimes = async (userId, service_contract_id, filters, sort, page, limit) => {
     try {
-        const queryParams = [];
-        let baseQuery = `FROM activity_time at
-            INNER JOIN activity_data ad ON ad.id = at.activity_id
-            INNER JOIN users u ON u.id = at.user_id
-            INNER JOIN work_shift ws ON ws.id = at.work_shift_id
-            WHERE at.is_deleted = 0`;
+      const queryParams = [];
+      const countParams = [];
+      
+      let query = `
+          SELECT 
+            sc.client_id,
+            ad.id AS activity_id,
+            ad.service_contract_id,
+            at.id AS activity_time_id,
+            ats.name as 'activity_type',
+            ad.activity_date,
+            ws.name AS work_shift_name,
+            u.name as user_name,
+            at.user_id,
+            at.work_shift_id,
+            at.work_start_datetime,
+            at.work_end_datetime,
+            at.break_start_datetime,
+            at.break_end_datetime,
+            at.ot_hours,
+            at.ot_is_chargable,
+            at.ot_remarks,
+            at.total_work_hours,
+            at.total_break_hours,
+            at.total_hours
+          FROM activity_data ad
+          INNER JOIN service_contracts sc ON sc.id = ad.service_contract_id
+          INNER JOIN activity_types ats on ats.id = ad.activity_type_id
+          INNER JOIN activity_time at ON at.activity_id = ad.id
+          INNER JOIN work_shift ws ON ws.id = at.work_shift_id
+          INNER JOIN users u ON u.id = at.user_id
+          WHERE ad.is_deleted = 0 AND sc.is_deleted = 0 AND ats.is_deleted = 0
+          AND at.is_deleted = 0 AND ws.is_deleted = 0 AND u.is_deleted = 0
+              
+      `;
 
-        // Apply Filters
-        if (filters) {
-            Object.keys(filters).forEach((key) => {
-                const value = filters[key];
-                if (key === "search" && value.trim()) {
-                    const searchFields = ["u.name", "ws.name"];
-                    const searchQuery = `(${searchFields.map(field => `${field} LIKE ?`).join(" OR ")})`;
-                    baseQuery += ` AND ${searchQuery}`;
-                    queryParams.push(...searchFields.map(() => `%${value}%`));
-                } else {
-                    baseQuery += ` AND ${key} = ?`;
-                    queryParams.push(value);
-                }
-            });
-        }
+      let countQuery = `
+          SELECT COUNT(*) as count
+          FROM activity_data ad
+          INNER JOIN service_contracts sc ON sc.id = ad.service_contract_id
+          INNER JOIN activity_types ats on ats.id = ad.activity_type_id
+          INNER JOIN activity_time at ON at.activity_id = ad.id
+          INNER JOIN work_shift ws ON ws.id = at.work_shift_id
+          INNER JOIN users u ON u.id = at.user_id
+          WHERE ad.is_deleted = 0 AND sc.is_deleted = 0 AND ats.is_deleted = 0
+          AND at.is_deleted = 0 AND ws.is_deleted = 0 AND u.is_deleted = 0
+      `;
 
-        let query = `
-            SELECT at.*, ad.activity_date, u.name AS user_name, ws.name AS work_shift_name
-            ${baseQuery}
-        `;
-        let countQuery = `SELECT COUNT(*) as count ${baseQuery}`;
+      if(service_contract_id){
+        query += ` AND ad.service_contract_id = ?`;
+        countQuery += ` AND ad.service_contract_id = ?`;
+      }
+    
+      queryParams.push(service_contract_id);
+      countParams.push(service_contract_id);
+      
+      // **Apply Filters**
+      if (filters) {
+          Object.keys(filters).forEach((key) => {
+              const value = filters[key];
 
-        // Apply Sorting
-        if (sort) {
-            query += ` ORDER BY ${sort.field || "at.id"} ${sort.order || "ASC"}`;
-        }
+              // Ignore empty search filter
+              if (key === "search" && (!value || !value.trim())) return;
 
-        // Apply Pagination
-        let totalRecords = 0, totalPages = 0;
-        if (page && limit) {
-            const [countResult] = await pool.query(countQuery, queryParams);
-            totalRecords = countResult[0].count;
-            totalPages = Math.ceil(totalRecords / limit);
-            query += ` LIMIT ? OFFSET ?`;
-            queryParams.push(limit, (page - 1) * limit);
-        }
+              if (key === "search") {
+                  const searchFields = [
+                      "ats.name",
+                      "u.email",
+                      "u.name",
+                      "ws.name",
+                      "at.ot_remarks",
+                      "ats.name"
+                  ];
+                  const searchQuery = `(${searchFields.map(field => `${field} LIKE ?`).join(" OR ")})`;
 
-        const [activityTimes] = await pool.query(query, queryParams);
+                  query += ` AND ${searchQuery}`;
+                  countQuery += ` AND ${searchQuery}`;
 
-        return {
-            activityTimes,
-            pagination: { currentPage: page, totalPages, totalRecords, hasPrev: page > 1, hasNext: page < totalPages }
-        };
+                  const searchValue = `%${value}%`;
+                  queryParams.push(...searchFields.map(() => searchValue));
+                  countParams.push(...searchFields.map(() => searchValue));
+              } else {
+                  query += ` AND ${key} = ?`;
+                  countQuery += ` AND ${key} = ?`;
+                  queryParams.push(value);
+                  countParams.push(value);
+              }
+          });
+      }
+      
+      // **Apply Sorting**
+      if (sort) {
+          const sortField = sort.field || "ad.id";
+          const sortOrder = sort.order || "ASC";
+          query += ` ORDER BY ${sortField} ${sortOrder}`;
+      }
+      
+      // **Apply Pagination**
+      let totalRecords = 0;
+      let totalPages = 0;
+      let offset = 0;
+      if (page && limit) {
+          const [countResult] = await pool.query(countQuery, countParams);
+          totalRecords = countResult[0].count;
+          totalPages = Math.ceil(totalRecords / limit);
+          offset = (page - 1) * limit;
+          query += ` LIMIT ? OFFSET ?`;
+          queryParams.push(limit, offset);
+      }
+      
+      const [activities] = await pool.query(query, queryParams);
+
+      return {
+          activities,
+          pagination: {
+              currentPage: page,
+              totalPages,
+              totalRecords,
+              hasPrev: page > 1,
+              hasNext: page < totalPages
+          }
+      };
     } catch (err) {
-        console.error("Error fetching activity times:", err);
-        throw new Error("Internal Server Error");
+      console.log(err.message);
+      res.status(500).json({ message: err.message });
     }
-};
+  };
 
 // Get a specific activity time record by ID
 exports.getActivityTimeById = async (id) => {

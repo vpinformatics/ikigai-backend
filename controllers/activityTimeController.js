@@ -2,13 +2,15 @@ const ActivityTimeService = require("../services/activityTimeService");
 
 exports.getAllActivityTimes = async (req, res) => {
   try {
-    const { activity_id } = req.params;
+    const userId = req.user.id;
+    const { service_contract_id } = req.params;
+
     const filters = req.query.filters ? JSON.parse(req.query.filters) : {};
     const sort = req.query.sort ? JSON.parse(req.query.sort) : {};
     const page = req.query.page ? parseInt(req.query.page, 10) : 1;
     const limit = req.query.limit ? parseInt(req.query.limit, 10) : 10;
 
-    const activityTimes = await ActivityTimeService.getAllActivityTimes(activity_id, filters, sort, page, limit);
+    const activityTimes = await ActivityTimeService.getAllActivityTimes(userId, service_contract_id, filters, sort, page, limit);
     res.status(200).json({ success: true, data: activityTimes });
   } catch (error) {
     res.status(500).json({ success: false, message: "Server Error", error });
@@ -27,7 +29,6 @@ exports.getActivityTimeById = async (req, res) => {
 
 exports.createActivityTime = async (req, res) => {
   try {
-    console.log(req.user);
     const userId = req.user.id;
     const activityTimeId = await ActivityTimeService.createActivityTime(req.body, userId);
     res.status(201).json({ message: "Activity Time created", id: activityTimeId });
