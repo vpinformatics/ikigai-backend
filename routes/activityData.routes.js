@@ -10,6 +10,8 @@ const { authorize } = require('../middlewares/authMiddleware');
  *   description: API for managing activity data
  */
 
+router.get("/get-sumary-data/:service_contract_id/:month/:year", activityDataController.getsummaryData);
+
 /**
  * @swagger
  * /activity-data/{service_contract_id}:

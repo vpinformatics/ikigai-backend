@@ -188,3 +188,34 @@ const pool = require('../config/database');
       `, [service_contract_id, activity_date, activity_type_id]);
     return (rows.length > 0) ? rows[0].id: null; 
   }
+
+  exports.getsummaryData = async(service_contract_id, month, year) => {
+    const [hoursData] = await pool.query(`
+      select 
+            a.activity_date, sum(at.total_hours) as hours 
+      from activity_data a 
+      INNER JOIN activity_time at on at.activity_id = a.id
+      where a.is_deleted = 0 and at.is_deleted = 0
+            and service_contract_id = ?
+            AND YEAR(a.activity_date) = ?
+            AND MONTH(a.activity_date) = ?
+      group by a.activity_date 
+      order by a.activity_date desc;
+    `, [service_contract_id, year, month]);
+
+    const [qtyData] = await pool.query(`
+      select 
+        a.activity_type_id, at.name as 'activity_type',
+          sum(adt.total_checked_qty) as total_checked_qty, sum(adt.ok_qty) as ok_qty, 
+          sum(adt.rework_qty) as rework_qty, sum(adt.rejection_qty) as rejection_qty 
+      from activity_data a 
+      INNER JOIN activity_details adt on adt.activity_id = a.id
+      inner join activity_types at on at.id = a.activity_type_id
+      where a.is_deleted = 0 and adt.is_deleted = 0
+      and service_contract_id = ?
+            AND YEAR(a.activity_date) = ?
+            AND MONTH(a.activity_date) = ?
+       group by a.activity_type_id, at.name;
+    `, [service_contract_id, year, month]);
+    return {hoursData, qtyData};
+  }

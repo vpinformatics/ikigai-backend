@@ -6,7 +6,6 @@ exports.assignClients = async (req, res) => {
         const createdBy = req.user.id;
         const { userId, clientIds } = req.body;
 
-        console.log( userId, clientIds);
         if (!userId || !clientIds || clientIds.length === 0) {
             return res.status(400).json({ message: 'Invalid request data' });
         }

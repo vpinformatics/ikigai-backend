@@ -2,10 +2,6 @@ const db = require('../config/database');
 
 // ✅ Assign multiple clients to a user (Check existing, Reactivate if soft-deleted)
 exports.assignClients = async (userId, clientIds, createdBy) => {
-    console.log('assignClients()');
-    console.log('User ID:', userId);
-    console.log('Assigned Clients:', clientIds);
-    console.log('Created By:', createdBy);
 
     // Fetch current client assignments
     const [currentClients] = await db.query(
@@ -14,7 +10,6 @@ exports.assignClients = async (userId, clientIds, createdBy) => {
     );
 
     const currentClientIds = currentClients.map(c => c.client_id);
-    console.log('Current Assigned Clients:', currentClientIds);
 
     // Find Clients to Add (New Selections)
     const clientsToAdd = clientIds.filter(c => !currentClientIds.includes(c));
@@ -29,17 +24,12 @@ exports.assignClients = async (userId, clientIds, createdBy) => {
         .filter(c => !clientIds.includes(c.client_id))
         .map(c => c.client_id);
 
-    console.log('Clients to Add:', clientsToAdd);
-    console.log('Clients to Reactivate:', clientsToReactivate);
-    console.log('Clients to Soft Delete:', clientsToDelete);
-
     // Insert New Client Assignments
     for (const clientId of clientsToAdd) {
         await db.query(
             'INSERT INTO user_clients (user_id, client_id, created_by, is_deleted, created_on) VALUES (?, ?, ?, 0, NOW())',
             [userId, clientId, createdBy]
         );
-        console.log(`Inserted new client assignment: ${clientId}`);
     }
 
     // Reactivate Soft-Deleted Clients
@@ -48,7 +38,6 @@ exports.assignClients = async (userId, clientIds, createdBy) => {
             'UPDATE user_clients SET is_deleted = 0, updated_by = ?, updated_on = NOW() WHERE user_id = ? AND client_id = ?',
             [createdBy, userId, clientId]
         );
-        console.log(`Reactivated client: ${clientId}`);
     }
 
     // Soft Delete Removed Clients
@@ -57,10 +46,8 @@ exports.assignClients = async (userId, clientIds, createdBy) => {
             'UPDATE user_clients SET is_deleted = 1, deleted_on = NOW(), updated_by = ? WHERE user_id = ? AND client_id = ?',
             [createdBy, userId, clientId]
         );
-        console.log(`Soft deleted client: ${clientId}`);
     }
 
-    console.log('Client assignment process completed.');
 };
 
 // ✅ Fetch all active clients assigned to a user

@@ -12,11 +12,14 @@ exports.getAllServiceContracts = async (client_id) => {
               sc.is_single_part, 
               sc.part_id, 
               sc.work_place_id, 
-              wp.name AS work_place_name, 
+              wp.name AS work_place_name,
+              p.part_number,
+              p.part_code, 
               GROUP_CONCAT(sca.activity_type_id) AS activity_type_ids
           FROM service_contracts sc
           LEFT JOIN service_contract_activity sca ON sc.id = sca.service_contract_id
           LEFT JOIN work_place wp ON sc.work_place_id = wp.id
+          LEFT JOIN parts p ON sc.part_id = p.id
           WHERE sc.is_deleted = 0 AND sc.client_id = ?
           GROUP BY sc.id, wp.id, wp.name;
       `,[client_id]);
