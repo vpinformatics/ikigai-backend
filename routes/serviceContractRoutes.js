@@ -12,6 +12,22 @@ const { authorize } = require('../middlewares/authMiddleware');
 
 /**
  * @swagger
+ * /service-contracts/sample:
+ *   get:
+ *     summary: Delete a service contract by ID (soft delete)
+ *     tags: [Service Contracts]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       204:
+ *         description: Service contract deleted
+ */
+// router.get('/sample', serviceContractController.sample);
+
+ router.get('/generate/:id', authorize([1, 2]), serviceContractController.generateExcel);
+
+/**
+ * @swagger
  * /service-contracts:
  *   get:
  *     summary: Get all service contracts
@@ -245,5 +261,7 @@ router.put('/:id', authorize([1, 2]), serviceContractController.updateServiceCon
 router.delete('/:id', authorize([1, 2]), serviceContractController.deleteServiceContract);
 
 router.get('/:client_id/:id', authorize([1, 2]), serviceContractController.getServiceContractData);
+
+//router.get('/download/:id', authorize([1, 2]), serviceContractController.downloadExcel);
 
 module.exports = router;

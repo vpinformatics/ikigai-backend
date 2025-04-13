@@ -1,4 +1,8 @@
 const serviceContractService = require('../services/serviceContractService');
+const ExcelJS = require('exceljs');
+const path = require('path');
+const fs = require('fs');
+const { createExcelFile } = require('../services/excelService');
 
 exports.getAllServiceContracts = async (req, res) => {
     try {
@@ -70,5 +74,22 @@ exports.getServiceContractData = async (req, res) => {
         res.status(200).json(serviceContracts);
     } catch (error) {
         res.status(500).json({ error: error.message });
+    }
+};
+
+exports.generateExcel = async (req, res) => {
+    try {
+        console.log('%cThis is a styled log message', 'background: #ffcccc; color: white; padding: 4px; border-radius: 4px;');
+
+        const filePath = await createExcelFile(req.params.id);
+        res.download(filePath, 'service contract report.xlsx', (err) => {
+            if (err) {
+                console.error('Error sending file:', err);
+                res.status(500).send('Error downloading file');
+            }
+        });
+    } catch (error) {
+        console.error('Error generating Excel:', error);
+        res.status(500).send('Error generating Excel file');
     }
 };

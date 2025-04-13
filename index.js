@@ -17,6 +17,7 @@ const activityDataRoutes = require("./routes/activityData.routes");
 const activityDetailsRoutes = require("./routes/activityDetails.routes");
 const userClientsRouts = require("./routes/userClientRoutes");
 const activityTimeRoutes = require("./routes/activityTimeRoutes");
+const excelRoutes = require('./routes/excelRoutes');
 
 const { exec } = require('child_process');
 
@@ -44,6 +45,7 @@ app.use("/v1/activity-data", activityDataRoutes);
 app.use("/v1/activity-details", activityDetailsRoutes);
 app.use('/v1/user-clients', userClientsRouts);
 app.use('/v1/activity-time', activityTimeRoutes);
+app.use('/v1/excel', excelRoutes);
 
 // Error handling middleware
 app.use(errorHandler);
@@ -55,7 +57,7 @@ app.listen(PORT, () => {
   const url = `http://localhost:${PORT}/api-docs`;
   switch (process.platform) {
       case 'darwin': exec(`open ${url}`); break; // macOS
-      case 'win32': exec(`start ${url}`); break; // Windows
+      //case 'win32': exec(`start ${url}`); break; // Windows
       case 'linux': exec(`xdg-open ${url}`); break; // Linux
       default: console.log(`Please open manually: ${url}`);
   }

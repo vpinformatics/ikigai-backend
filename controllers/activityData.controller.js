@@ -89,3 +89,14 @@ exports.getsummaryData = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 }
+
+exports.getPayrollSummaryData = async (req, res) => {
+  try {
+    const { month, year } = req.params;
+    const result = await ActivityDataService.fetchPayrollSummary( +month, +year);
+    res.json({ ...result });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};

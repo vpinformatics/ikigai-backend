@@ -1,4 +1,6 @@
 const pool = require('../config/database');
+const moment = require('moment');
+
   exports.getAllActivities = async (userId, service_contract_id, filters, sort, page, limit) => {
     try {
       const queryParams = [];
@@ -189,7 +191,7 @@ const pool = require('../config/database');
     return (rows.length > 0) ? rows[0].id: null; 
   }
 
-  exports.getsummaryData = async(service_contract_id, month, year) => {
+  exports.getsummaryData = async( month, year) => {
     const [hoursData] = await pool.query(`
       select 
             a.activity_date, sum(at.total_hours) as hours 
@@ -217,5 +219,84 @@ const pool = require('../config/database');
             AND MONTH(a.activity_date) = ?
        group by a.activity_type_id, at.name;
     `, [service_contract_id, year, month]);
-    return {hoursData, qtyData};
+
+    const [activityData] = await pool.query(`
+      select 
+        ad.activity_type_id , at.name as activity_type, ad.activity_date, ws.name as shift,
+        p.part_code, p.part_number, ads.total_checked_qty, ads.ok_qty, ads.rework_qty, ads.rejection_qty, ads.rejection_percent, ads.remarks
+      from activity_data ad
+        INNER JOIN activity_types at on at.id = ad.activity_type_id
+        INNER JOIN activity_details ads on ads.activity_id = ad.id
+        INNER JOIN parts p on p.id = ads.part_id
+        INNER JOIN work_shift ws on ws.id = ads.work_shift_id
+      where ad.is_deleted = 0 AND ads.is_deleted = 0 
+        AND ad.service_contract_id = ?
+        AND YEAR(ad.activity_date) = ?
+        AND MONTH(ad.activity_date) = ?;
+    `, [service_contract_id, year, month]);
+   console.log(hoursData, qtyData, activityData);
+    return {hoursData, qtyData, activityData};
   }
+
+  exports.fetchPayrollSummary = async (month, year) => {
+    const startDate = `${year}-${month.toString().padStart(2, '0')}-01`;
+    const endDate = moment(startDate).endOf('month').format('YYYY-MM-DD');
+  
+    const query = `
+      WITH activity_minutes AS (
+        SELECT
+          u.id AS user_id,
+          u.name AS user_name,
+          DAY(ad.activity_date) AS day_of_month,
+          TIMESTAMPDIFF(MINUTE, at.work_start_datetime, at.work_end_datetime)
+            - TIMESTAMPDIFF(MINUTE, at.break_start_datetime, at.break_end_datetime) AS work_minutes,
+          at.ot_hours * 60 AS ot_minutes
+        FROM ikigai.users u
+        LEFT JOIN ikigai.activity_time at ON u.id = at.user_id AND at.is_deleted = 0
+        LEFT JOIN ikigai.activity_data ad ON ad.id = at.activity_id
+          AND ad.activity_date BETWEEN '${startDate}' AND '${endDate}'
+        WHERE u.is_deleted = 0 AND u.is_active = 1
+      )
+  
+      SELECT
+        user_id,
+        user_name,
+        ${Array.from({ length: 31 }, (_, i) => {
+          const day = i + 1;
+          return `
+            SUM(CASE WHEN day_of_month = ${day} THEN work_minutes ELSE 0 END) AS \`${day}DT\`,
+            SUM(CASE WHEN day_of_month = ${day} THEN ot_minutes ELSE 0 END) AS \`${day}OT\`
+          `;
+        }).join(',')}
+      FROM activity_minutes
+      GROUP BY user_id, user_name
+      ORDER BY user_id;
+    `;
+  
+    const [rows] = await pool.query(query);
+  
+    const dailyTotals = {};
+  
+    for (const row of rows) {
+      const userId = row.user_id;
+      dailyTotals[userId] = {};
+  
+      for (let day = 1; day <= 31; day++) {
+        const dtKey = `${day}DT`;
+        const otKey = `${day}OT`;
+        const totalDT = Number(row[dtKey] || 0);
+        const totalOT = Number(row[otKey] || 0);
+  
+        dailyTotals[userId][day] = {
+          totalDT,
+          totalOT
+        };
+      }
+    }
+  
+    return {
+      data: rows,
+      dailyTotals
+    };
+  };
+  
