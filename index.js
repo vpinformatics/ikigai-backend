@@ -18,6 +18,7 @@ const activityDetailsRoutes = require("./routes/activityDetails.routes");
 const userClientsRouts = require("./routes/userClientRoutes");
 const activityTimeRoutes = require("./routes/activityTimeRoutes");
 const excelRoutes = require('./routes/excelRoutes');
+const userPermissionsRoutes = require('./routes/userPermissionsRoutes');
 
 const { exec } = require('child_process');
 
@@ -46,6 +47,7 @@ app.use("/v1/activity-details", activityDetailsRoutes);
 app.use('/v1/user-clients', userClientsRouts);
 app.use('/v1/activity-time', activityTimeRoutes);
 app.use('/v1/excel', excelRoutes);
+app.use('/v1/user-permissions', userPermissionsRoutes);
 
 // Error handling middleware
 app.use(errorHandler);

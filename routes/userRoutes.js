@@ -36,6 +36,35 @@ router.get('/', authorize([1, 2]), userController.getAllUsers);
 
 /**
  * @swagger
+ * /users/loggedin:
+ *   get:
+ *     summary: Get a user by ID
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 name:
+ *                   type: string
+ *                 email:
+ *                   type: string
+ *                 role:
+ *                   type: string
+ *                 is_active:
+ *                   type: boolean
+ */
+router.get('/loggedin', authorize([1, 2]), userController.getLoggedInUser);
+
+/**
+ * @swagger
  * /users/{id}:
  *   get:
  *     summary: Get a user by ID

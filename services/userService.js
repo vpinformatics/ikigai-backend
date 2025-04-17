@@ -86,6 +86,36 @@ exports.getAllUsers = async (filters, sort, page, limit) => {
   };
 };
 
+
+exports.getLoggedInUser = async (id) => {
+  const [users] = await pool.query(`
+    SELECT 
+      u.id AS id,
+      u.name AS name,
+      u.email AS email,
+      r.id AS roleId,
+      r.name AS roleName
+    FROM users u
+    JOIN roles r ON u.role_id = r.id
+    WHERE u.id = ? AND u.is_deleted = 0 AND u.is_active = 1;
+  `, [id]);
+
+  const user = users[0];
+
+  if (!user) return null;
+
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: {
+      id: user.roleId,
+      name: user.roleName
+    }
+  };
+};
+
+
 exports.getUserById = async (id) => {
   const [users] = await pool.query('SELECT * FROM users WHERE id = ? AND is_deleted = FALSE', [id]);
   return users;
