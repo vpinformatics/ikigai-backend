@@ -12,7 +12,7 @@ const { authorize } = require('../middlewares/authMiddleware');
 
 router.get('/get-payroll-summary-data/:month/:year', activityDataController.getPayrollSummaryData);
 
-router.get("/get-sumary-data/:service_contract_id/:month/:year", activityDataController.getsummaryData);
+router.get("/get-summary-data/:service_contract_id/:month/:year", activityDataController.getsummaryData);
 
 /**
  * @swagger

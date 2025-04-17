@@ -191,7 +191,7 @@ const moment = require('moment');
     return (rows.length > 0) ? rows[0].id: null; 
   }
 
-  exports.getsummaryData = async( month, year) => {
+  exports.getsummaryData = async(service_contract_id, month, year) => {
     const [hoursData] = await pool.query(`
       select 
             a.activity_date, sum(at.total_hours) as hours 
