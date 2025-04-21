@@ -2,7 +2,7 @@ const ExcelJS = require('exceljs');
 const path = require('path');
 const fs = require('fs');
 
-const createExcelFile = async (service_contract_id) => {
+const createExcelFile = async (activity_id) => {
   const workbook = new ExcelJS.Workbook();
   
   // Sheet 1: Summary Report

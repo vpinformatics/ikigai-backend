@@ -77,9 +77,9 @@ exports.deleteUser = async (req, res, next) => {
   } 
 };
 
-exports.getUsersByClinetId = async (req, res, next) => {
+exports.getUsersByActivityId = async (req, res, next) => {
   try{
-      const data = await userService.getUsersByClinetId(req.params.client_id);
+      const data = await userService.getUsersByActivityId(req.params.activity_id);
       res.status(200).json({ data });
   } catch (error) {
     next(error);

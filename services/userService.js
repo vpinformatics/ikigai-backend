@@ -121,18 +121,18 @@ exports.getUserById = async (id) => {
   return users;
 };
 
-exports.getUsersByClinetId = async (client_id) => {
+exports.getUsersByActivityId = async (activity_id) => {
   const [users] = await pool.query(`
     SELECT 
       u.id as 'user_id', u.name as 'user_name', u.email, 
       u.role_id, r.name as 'role_name'
-      ,uc.id as 'user_client_id'
-    FROM user_clients uc
+      ,uc.id as 'user_activity_id'
+    FROM user_activities uc
     INNER JOIN users u ON u.id = uc.user_id
     INNER JOIN roles r ON r.id = u.role_id
     WHERE u.is_deleted = 0 AND uc.is_deleted = 0
-    AND u.is_active = 1 AND uc.client_id = ?
-    `, [client_id]);
+    AND u.is_active = 1 AND uc.activity_id = ?
+    `, [activity_id]);
   return users;
 };
 
@@ -144,13 +144,13 @@ exports.getUserById = async (id) => {
 
   if (!users.length) return null; // If user not found
 
-  const [assignedClients] = await pool.query(
-    `SELECT client_id FROM user_clients WHERE user_id = ? AND is_deleted = FALSE`,
+  const [assignedActivities] = await pool.query(
+    `SELECT activity_id FROM user_activities WHERE user_id = ? AND is_deleted = FALSE`,
     [id]
   );
 
-  // Attach assigned clients to user
-  users[0].assignedClients = assignedClients.map(client => client.client_id);
+  // Attach assigned Activities to user
+  users[0].assignedActivities = assignedActivities.map(activity => activity.activity_id);
 
   return users[0];
 };
@@ -173,7 +173,7 @@ exports.createUser = async (userData, userId) => {
 };
 
 exports.updateUser = async (id, userData, userId) => {
-  const { name, email, password, role_id, is_active, isUpdatePassword } = userData;
+  const { name, email, password, role_id, is_active, isUpdatePassword, activityIds } = userData;
   const hashedPassword = isUpdatePassword?await bcrypt.hash(password, 12):'';
 
   await pool.query(

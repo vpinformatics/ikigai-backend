@@ -77,6 +77,18 @@ exports.getServiceContractData = async (req, res) => {
     }
 };
 
+exports.getAll = async (req, res) => {
+    try {
+        const serviceContracts = await serviceContractService.getAll();
+        // if (!serviceContracts || serviceContracts.length === 0) {
+        //     return res.status(404).json({ message: "No service contracts found" });
+        // }
+        res.status(200).json(serviceContracts);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 exports.generateExcel = async (req, res) => {
     try {
         console.log('%cThis is a styled log message', 'background: #ffcccc; color: white; padding: 4px; border-radius: 4px;');

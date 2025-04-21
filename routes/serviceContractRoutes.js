@@ -23,8 +23,9 @@ const { authorize } = require('../middlewares/authMiddleware');
  *         description: Service contract deleted
  */
 // router.get('/sample', serviceContractController.sample);
+router.get('/getAll', authorize([1, 2]), serviceContractController.getAll);
 
- router.get('/generate/:id', authorize([1, 2]), serviceContractController.generateExcel);
+//  router.get('/generate/:id', authorize([1, 2]), serviceContractController.gen1erateExcel);
 
 /**
  * @swagger
@@ -172,7 +173,7 @@ router.get('/:id', authorize([1, 2]), serviceContractController.getServiceContra
  *                   items:
  *                     type: integer
  */
-router.post('/:id', authorize([1, 2]), serviceContractController.createServiceContract);
+router.post('/', authorize([1, 2]), serviceContractController.createServiceContract);
 
 /**
  * @swagger
@@ -261,6 +262,7 @@ router.put('/:id', authorize([1, 2]), serviceContractController.updateServiceCon
 router.delete('/:id', authorize([1, 2]), serviceContractController.deleteServiceContract);
 
 router.get('/:client_id/:id', authorize([1, 2]), serviceContractController.getServiceContractData);
+
 
 //router.get('/download/:id', authorize([1, 2]), serviceContractController.downloadExcel);
 

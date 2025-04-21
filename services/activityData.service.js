@@ -1,7 +1,7 @@
 const pool = require('../config/database');
 const moment = require('moment');
 
-  exports.getAllActivities = async (userId, service_contract_id, filters, sort, page, limit) => {
+  exports.getAllActivities = async (userId, activity_id, filters, sort, page, limit) => {
     try {
       const queryParams = [];
       const countParams = [];
@@ -10,7 +10,7 @@ const moment = require('moment');
           SELECT 
               sc.client_id,
               ad.id AS activity_id,
-              ad.service_contract_id,
+              ad.activity_id,
               adtl.id AS activity_details_id,
               ats.name as 'activity_type',
               ad.activity_date,
@@ -24,9 +24,9 @@ const moment = require('moment');
               rejection_percent,
               remarks
           FROM activity_data ad
-          INNER JOIN service_contracts sc ON sc.id = ad.service_contract_id
+          INNER JOIN activities sc ON sc.id = ad.activity_id
           INNER JOIN activity_types ats on ats.id = ad.activity_type_id
-          INNER JOIN activity_details adtl ON adtl.activity_id = ad.id
+          INNER JOIN activity_details adtl ON adtl.activity_data_id = ad.id
           INNER JOIN parts p ON p.id = adtl.part_id
           INNER JOIN work_shift ws ON ws.id = adtl.work_shift_id
           WHERE ad.is_deleted = 0 
@@ -37,20 +37,20 @@ const moment = require('moment');
           SELECT COUNT(*) as count
           FROM activity_data ad
           Inner Join activity_types ats on ats.id = ad.activity_type_id
-          INNER JOIN activity_details adtl ON adtl.activity_id = ad.id
+          INNER JOIN activity_details adtl ON adtl.activity_data_id = ad.id
           INNER JOIN parts p ON p.id = adtl.part_id
           INNER JOIN work_shift ws ON ws.id = adtl.work_shift_id
           WHERE ad.is_deleted = 0 
           AND adtl.is_deleted = 0
       `;
 
-      if(service_contract_id){
-        query += ` AND ad.service_contract_id = ?`;
-        countQuery += ` AND ad.service_contract_id = ?`;
+      if(activity_id){
+        query += ` AND ad.activity_id = ?`;
+        countQuery += ` AND ad.activity_id = ?`;
       }
     
-      queryParams.push(service_contract_id);
-      countParams.push(service_contract_id);
+      queryParams.push(activity_id);
+      countParams.push(activity_id);
       
       // **Apply Filters**
       if (filters) {
@@ -66,7 +66,7 @@ const moment = require('moment');
                       "p.part_code",
                       "ws.name",
                       "remarks",
-                      "service_contract_id",
+                      "activity_id",
                       "ats.name"
                   ];
                   const searchQuery = `(${searchFields.map(field => `${field} LIKE ?`).join(" OR ")})`;
@@ -129,13 +129,13 @@ const moment = require('moment');
       SELECT 
         a.id as activity_id, 
         a.activity_date, 
-        a.service_contract_id, 
+        a.activity_id, 
         a.activity_type_id,
         ats.name as 'activity_name'
       FROM activity_data a
-      INNER JOIN activity_details ad ON ad.activity_id = a.id
+      INNER JOIN activity_details ad ON ad.activity_data_id = a.id
       INNER JOIN activity_types ats on ats.id = a.activity_type_id
-      WHERE a.service_contract_id = ? AND a.is_deleted = 0 AND ad.is_deleted = 0;
+      WHERE a.activity_id = ? AND a.is_deleted = 0 AND ad.is_deleted = 0;
       `, [id]);
     return rows;
   }
@@ -146,12 +146,13 @@ const moment = require('moment');
   }
 
   exports.createActivity = async (data) => {
-    const { service_contract_id, activity_date, activity_type_id, created_by } = data;
+    const { activity_id, activity_date, activity_type_id, created_by } = data;
+    console.log('createActivity()', activity_id, activity_date, activity_type_id, created_by );
 
     // Check if the record already exists
     const [existing] = await pool.query(
-        "SELECT id FROM activity_data WHERE service_contract_id = ? AND activity_date = ? AND activity_type_id = ?",
-        [service_contract_id, activity_date, activity_type_id]
+        "SELECT id FROM activity_data WHERE activity_id = ? AND activity_date = ? AND activity_type_id = ?",
+        [activity_id, activity_date, activity_type_id]
     );
 
     if (existing.length > 0) {
@@ -160,18 +161,19 @@ const moment = require('moment');
 
     // Insert new record if not found
     const [result] = await pool.query(
-        "INSERT INTO activity_data (service_contract_id, activity_date, activity_type_id, created_by) VALUES (?, ?, ?, ?)",
-        [service_contract_id, activity_date, activity_type_id, created_by]
+        "INSERT INTO activity_data (activity_id, activity_date, activity_type_id, created_by) VALUES (?, ?, ?, ?)",
+        [activity_id, activity_date, activity_type_id, created_by]
     );
 
     return result.insertId; // Return new record ID
   };
 
   exports.updateActivity= async(id, data) => {
-    const { service_contract_id, activity_date, activity_type_id, updated_by } = data;
+    const { activity_id, activity_date, activity_type_id, updated_by } = data;
+    console.log('updateActivity()',activity_id, activity_date, activity_type_id, updated_by, id);
     await pool.query(
-      "UPDATE activity_data SET service_contract_id=?, activity_date=?, activity_type_id=?, updated_by=?, updated_on=CURRENT_TIMESTAMP WHERE id=?",
-      [service_contract_id, activity_date, activity_type_id, updated_by, id]
+      "UPDATE activity_data SET activity_id=?, activity_date=?, activity_type_id=?, updated_by=?, updated_on=CURRENT_TIMESTAMP WHERE id=?",
+      [activity_id, activity_date, activity_type_id, updated_by, id]
     );
   }
 
@@ -179,31 +181,32 @@ const moment = require('moment');
     await pool.query("UPDATE activity_data SET is_deleted = 1, deleted_on = NOW() WHERE id = ?", [id]);
   }
 
-  exports.checkActivityByDateAndType = async(service_contract_id, activity_date, activity_type_id) => {
+  exports.checkActivityByDateAndType = async(activity_id, activity_date, activity_type_id) => {
+    console.log('checkActivityByDateAndType()', activity_id, activity_date, activity_type_id);
     const [rows] = await pool.query(`
       SELECT id 
       FROM activity_data 
-      WHERE service_contract_id = ? 
+      WHERE activity_id = ? 
         AND activity_date=?
         AND activity_type_id = ? 
         AND is_deleted = 0
-      `, [service_contract_id, activity_date, activity_type_id]);
+      `, [activity_id, activity_date, activity_type_id]);
     return (rows.length > 0) ? rows[0].id: null; 
   }
 
-  exports.getsummaryData = async(service_contract_id, month, year) => {
+  exports.getsummaryData = async(activity_id, month, year) => {
     const [hoursData] = await pool.query(`
       select 
             a.activity_date, sum(at.total_hours) as hours 
       from activity_data a 
       INNER JOIN activity_time at on at.activity_id = a.id
       where a.is_deleted = 0 and at.is_deleted = 0
-            and service_contract_id = ?
+            and activity_id = ?
             AND YEAR(a.activity_date) = ?
             AND MONTH(a.activity_date) = ?
       group by a.activity_date 
       order by a.activity_date desc;
-    `, [service_contract_id, year, month]);
+    `, [activity_id, year, month]);
 
     const [qtyData] = await pool.query(`
       select 
@@ -214,11 +217,11 @@ const moment = require('moment');
       INNER JOIN activity_details adt on adt.activity_id = a.id
       inner join activity_types at on at.id = a.activity_type_id
       where a.is_deleted = 0 and adt.is_deleted = 0
-      and service_contract_id = ?
+      and activity_id = ?
             AND YEAR(a.activity_date) = ?
             AND MONTH(a.activity_date) = ?
        group by a.activity_type_id, at.name;
-    `, [service_contract_id, year, month]);
+    `, [activity_id, year, month]);
 
     const [activityData] = await pool.query(`
       select 
@@ -230,11 +233,10 @@ const moment = require('moment');
         INNER JOIN parts p on p.id = ads.part_id
         INNER JOIN work_shift ws on ws.id = ads.work_shift_id
       where ad.is_deleted = 0 AND ads.is_deleted = 0 
-        AND ad.service_contract_id = ?
+        AND ad.activity_id = ?
         AND YEAR(ad.activity_date) = ?
         AND MONTH(ad.activity_date) = ?;
-    `, [service_contract_id, year, month]);
-   console.log(hoursData, qtyData, activityData);
+    `, [activity_id, year, month]);
     return {hoursData, qtyData, activityData};
   }
 

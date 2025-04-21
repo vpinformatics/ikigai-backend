@@ -12,17 +12,17 @@ const { authorize } = require('../middlewares/authMiddleware');
 
 router.get('/get-payroll-summary-data/:month/:year', activityDataController.getPayrollSummaryData);
 
-router.get("/get-summary-data/:service_contract_id/:month/:year", activityDataController.getsummaryData);
+router.get("/get-summary-data/:activity_id/:month/:year", activityDataController.getsummaryData);
 
 /**
  * @swagger
- * /activity-data/{service_contract_id}:
+ * /activity-data/{activity_id}:
  *   get:
  *     summary: Get all activities for a specific service contract
  *     tags: [Activity Data]
  *     parameters:
  *       - in: path
- *         name: service_contract_id
+ *         name: activity_id
  *         required: true
  *         schema:
  *           type: integer
@@ -39,7 +39,7 @@ router.get("/get-summary-data/:service_contract_id/:month/:year", activityDataCo
  *                 properties:
  *                   id:
  *                     type: integer
- *                   service_contract_id:
+ *                   activity_id:
  *                     type: integer
  *                   activity_date:
  *                     type: string
@@ -47,7 +47,7 @@ router.get("/get-summary-data/:service_contract_id/:month/:year", activityDataCo
  *                   activity_type_id:
  *                     type: integer
  */
-router.get("/:service_contract_id?", authorize([1, 2]), activityDataController.getAllActivities);
+router.get("/:activity_id?", authorize([1, 2]), activityDataController.getAllActivities);
 
 /**
  * @swagger
@@ -72,7 +72,7 @@ router.get("/:service_contract_id?", authorize([1, 2]), activityDataController.g
  *               properties:
  *                 id:
  *                   type: integer
- *                 service_contract_id:
+ *                 activity_id:
  *                   type: integer
  *                 activity_date:
  *                   type: string
@@ -95,7 +95,7 @@ router.get("/:id", authorize([1, 2]), activityDataController.getActivityById);
  *           schema:
  *             type: object
  *             properties:
- *               service_contract_id:
+ *               activity_id:
  *                 type: integer
  *               activity_date:
  *                 type: string
@@ -112,7 +112,7 @@ router.get("/:id", authorize([1, 2]), activityDataController.getActivityById);
  *               properties:
  *                 id:
  *                   type: integer
- *                 service_contract_id:
+ *                 activity_id:
  *                   type: integer
  *                 activity_date:
  *                   type: string
@@ -141,7 +141,7 @@ router.post("/", authorize([1, 2]), activityDataController.createActivity);
  *           schema:
  *             type: object
  *             properties:
- *               service_contract_id:
+ *               activity_id:
  *                 type: integer
  *               activity_date:
  *                 type: string
@@ -158,7 +158,7 @@ router.post("/", authorize([1, 2]), activityDataController.createActivity);
  *               properties:
  *                 id:
  *                   type: integer
- *                 service_contract_id:
+ *                 activity_id:
  *                   type: integer
  *                 activity_date:
  *                   type: string
@@ -186,6 +186,6 @@ router.put("/:id", authorize([1, 2]), activityDataController.updateActivity);
  */
 router.delete("/:id", authorize([1, 2]), activityDataController.deleteActivity);
 
-router.get("/get-all-dates/:service_contract_id", authorize([1, 2]), activityDataController.getAllDates);
+router.get("/get-all-dates/:activity_id", authorize([1, 2]), activityDataController.getAllDates);
 
 module.exports = router;

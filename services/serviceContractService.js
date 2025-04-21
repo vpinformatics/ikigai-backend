@@ -2,11 +2,12 @@ const pool = require('../config/database');
 const { executeTransaction } = require('../utils/dbHelper');
 
 exports.getAllServiceContracts = async (client_id) => {
-  try {
-      const [serviceContracts] = await pool.query(`
+    try {
+        const [serviceContracts] = await pool.query(`
           SELECT 
               sc.id, 
               sc.client_id, 
+              sc.activity_number,
               sc.service_contract_reference, 
               sc.service_contract_date, 
               sc.is_single_part, 
@@ -16,55 +17,51 @@ exports.getAllServiceContracts = async (client_id) => {
               p.part_number,
               p.part_code, 
               GROUP_CONCAT(sca.activity_type_id) AS activity_type_ids
-          FROM service_contracts sc
-          LEFT JOIN service_contract_activity sca ON sc.id = sca.service_contract_id
+          FROM activities sc
+          LEFT JOIN activity_with_types sca ON sc.id = sca.activity_id
           LEFT JOIN work_place wp ON sc.work_place_id = wp.id
           LEFT JOIN parts p ON sc.part_id = p.id
           WHERE sc.is_deleted = 0 AND sc.client_id = ?
           GROUP BY sc.id, wp.id, wp.name;
-      `,[client_id]);
-      return serviceContracts;
-  } catch (error) {
-      throw error;
-  }
+      `, [client_id]);
+        return serviceContracts;
+    } catch (error) {
+        throw error;
+    }
 };
 
 exports.createServiceContract = async (serviceContractData, userId) => {
-    //console.log('🚀 Creating Service Contract with Transaction');
+    console.log('🚀 Creating Service Contract with Transaction');
 
     return executeTransaction(async (connection) => {
-        const { client_id, service_contract_date, isSinglePart, partId, activityTypes, work_place_id } = serviceContractData;
-
-        const currentYear = new Date().getFullYear();
-        const currentMonth = new Date().getMonth() + 1;
+        const { client_id, service_contract_date, isSinglePart, partId, activityTypes, work_place_id, service_contract_reference } = serviceContractData;
 
         // Step 1️⃣: Get the current sequence for this month & year
-        const [sequenceResult] = await connection.query(
-            "SELECT sequence FROM service_contract_sequence WHERE year = ? AND month = ? ORDER BY id DESC LIMIT 1",
-            [currentYear, currentMonth]
+        const [last_activity_number] = await connection.query(
+            `SELECT 
+                    CONCAT('IKIGAI-', LPAD(
+                        IFNULL(
+                        MAX(CAST(SUBSTRING_INDEX(activity_number, '-', -1) AS UNSIGNED)) + 1,
+                        1
+                        ),
+                        4, '0'
+                    )) AS new_activity_number
+            FROM activities;`,
         );
 
         let nextSequence = 1;
-        if (sequenceResult.length > 0) {
-            nextSequence = sequenceResult[0].sequence + 1;
+        if (last_activity_number.length > 0) {
+            nextSequence = last_activity_number[0].new_activity_number;
         }
-
-        // Step 2️⃣: Insert the new sequence
-        await connection.query(
-            "INSERT INTO service_contract_sequence (year, month, sequence) VALUES (?, ?, ?)",
-            [currentYear, currentMonth, nextSequence]
-        );
-
-        // Step 3️⃣: Generate service contract reference
-        const service_contract_reference = `IKI/IN/${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(nextSequence).padStart(2, '0')}`;
 
         // Step 4️⃣: Insert service contract
         const contractInsertQuery = `
-            INSERT INTO service_contracts (client_id, service_contract_reference, service_contract_date, is_single_part, part_id, created_by, updated_by, work_place_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO activities (client_id, activity_number, service_contract_reference, service_contract_date, is_single_part, part_id, created_by, updated_by, work_place_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
         const [result] = await connection.query(contractInsertQuery, [
             client_id,
+            nextSequence,
             service_contract_reference,
             service_contract_date,
             isSinglePart,
@@ -78,7 +75,7 @@ exports.createServiceContract = async (serviceContractData, userId) => {
 
         // Step 5️⃣: Insert activity types (if any)
         if (Array.isArray(activityTypes) && activityTypes.length > 0) {
-            const activityInsertQuery = 'INSERT INTO service_contract_activity (service_contract_id, activity_type_id) VALUES ?';
+            const activityInsertQuery = 'INSERT INTO activity_with_types (activity_id, activity_type_id) VALUES ?';
             const activityValues = activityTypes.map(id => [contractId, id]);
             await connection.query(activityInsertQuery, [activityValues]);
         }
@@ -90,12 +87,12 @@ exports.createServiceContract = async (serviceContractData, userId) => {
 
 exports.getServiceContractById = async (id) => {
     const contract = await pool.query(
-        `SELECT * FROM service_contracts WHERE id = ? AND is_deleted = 0`, 
+        `SELECT * FROM activities WHERE id = ? AND is_deleted = 0`,
         [id]
     );
 
     const activities = await pool.query(
-        `SELECT activity_type_id FROM service_contract_activity WHERE service_contract_id = ?`, 
+        `SELECT activity_type_id FROM activity_with_types WHERE activity_id = ?`,
         [id]
     );
 
@@ -103,34 +100,36 @@ exports.getServiceContractById = async (id) => {
 };
 
 exports.updateServiceContract = async (id, data, userId) => {
-    //console.log('🚀 Updating Service Contract with Transaction');
+    console.log('🚀 Updating Service Contract with Transaction', id);
 
     return executeTransaction(async (connection) => {
-        const { service_contract_date, isSinglePart, partId, activityTypes, work_place_id } = data;
+        const { service_contract_reference, service_contract_date, isSinglePart, partId, activityTypes, work_place_id } = data;
+
+        console.log('Service Contract Data:', data);
 
         // console.log('Step 1️⃣: Update the service contract');
         await connection.query(
-            `UPDATE service_contracts SET service_contract_date = ?, is_single_part = ?, part_id = ?, updated_by = ?, work_place_id = ? WHERE id = ?`,
-            [service_contract_date, isSinglePart, partId, userId, work_place_id, id]
+            `UPDATE activities SET service_contract_reference = ?, service_contract_date = ?,  updated_by = ?, work_place_id = ? WHERE id = ?`,
+            [service_contract_reference, service_contract_date, userId, work_place_id, id]
         );
-
+        console.log('1');
         // console.log('Step 2️⃣: Delete existing activity types');
-        await connection.query(`DELETE FROM service_contract_activity WHERE service_contract_id = ?`, [id]);
-
+        await connection.query(`DELETE FROM activity_with_types WHERE activity_id = ?`, [id]);
+        console.log('2');
         // Step 3️⃣: Insert new activity types (if any)
         if (Array.isArray(activityTypes) && activityTypes.length > 0) {
-            const activityInsertQuery = 'INSERT INTO service_contract_activity (service_contract_id, activity_type_id) VALUES ?';
+            const activityInsertQuery = 'INSERT INTO activity_with_types (activity_id, activity_type_id) VALUES ?';
             const activityValues = activityTypes.map(aid => [id, aid]);
             await connection.query(activityInsertQuery, [activityValues]);
         }
-
+        console.log('3');
         // console.log('✅ Service Contract Updated:', id);
         return { id };
     });
 };
 
 exports.deleteServiceContract = async (id) => {
-    await pool.query(`UPDATE service_contracts SET is_deleted = 1, deleted_on = NOW() WHERE id = ?`, [id]);
+    await pool.query(`UPDATE activities SET is_deleted = 1, deleted_on = NOW() WHERE id = ?`, [id]);
 };
 
 exports.getServiceContractData = async (client_id, id) => {
@@ -142,16 +141,37 @@ exports.getServiceContractData = async (client_id, id) => {
             c.contact_phone,
             c.contact_email,
             c.gst_number,
+            sc.activity_number,
             sc.service_contract_reference, 
             sc.service_contract_date, 
             wp.name AS work_place_name
-        FROM service_contracts sc
+        FROM activities sc
         INNER JOIN clients c ON c.id = sc.client_id
-        LEFT JOIN service_contract_activity sca ON sc.id = sca.service_contract_id
+        LEFT JOIN activity_with_types sca ON sc.id = sca.activity_id
         LEFT JOIN work_place wp ON sc.work_place_id = wp.id
         WHERE sc.is_deleted = 0 AND sc.client_id = ? AND sc.id = ?
           `, [client_id, id]);
-          return serviceContracts;
+        return serviceContracts;
+    } catch (error) {
+        throw error;
+    }
+};
+
+exports.getAll = async () => {
+    try {
+        const [serviceContracts] = await pool.query(`
+                SELECT 
+                    sc.id,
+                    c.name as clientName,
+                    sc.activity_number,
+                    sc.service_contract_reference 
+                FROM activities sc
+                INNER JOIN clients c ON c.id = sc.client_id
+                LEFT JOIN work_place wp ON sc.work_place_id = wp.id
+                WHERE sc.is_deleted = 0
+                order by sc.id DESC
+                `);
+        return serviceContracts;
     } catch (error) {
         throw error;
     }

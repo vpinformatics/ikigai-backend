@@ -1,7 +1,7 @@
 const pool = require("../config/database");
 
 // Get all activity time records with optional filters, sorting, and pagination
-exports.getAllActivityTimes = async (userId, service_contract_id, filters, sort, page, limit) => {
+exports.getAllActivityTimes = async (userId, activity_id, filters, sort, page, limit) => {
     try {
       const queryParams = [];
       const countParams = [];
@@ -10,7 +10,7 @@ exports.getAllActivityTimes = async (userId, service_contract_id, filters, sort,
           SELECT 
             sc.client_id,
             ad.id AS activity_id,
-            ad.service_contract_id,
+            ad.activity_id,
             at.id AS activity_time_id,
             ats.name as 'activity_type',
             ad.activity_date,
@@ -29,7 +29,7 @@ exports.getAllActivityTimes = async (userId, service_contract_id, filters, sort,
             at.total_break_hours,
             at.total_hours
           FROM activity_data ad
-          INNER JOIN service_contracts sc ON sc.id = ad.service_contract_id
+          INNER JOIN activities sc ON sc.id = ad.activity_id
           INNER JOIN activity_types ats on ats.id = ad.activity_type_id
           INNER JOIN activity_time at ON at.activity_id = ad.id
           INNER JOIN work_shift ws ON ws.id = at.work_shift_id
@@ -42,7 +42,7 @@ exports.getAllActivityTimes = async (userId, service_contract_id, filters, sort,
       let countQuery = `
           SELECT COUNT(*) as count
           FROM activity_data ad
-          INNER JOIN service_contracts sc ON sc.id = ad.service_contract_id
+          INNER JOIN activities sc ON sc.id = ad.activity_id
           INNER JOIN activity_types ats on ats.id = ad.activity_type_id
           INNER JOIN activity_time at ON at.activity_id = ad.id
           INNER JOIN work_shift ws ON ws.id = at.work_shift_id
@@ -51,13 +51,13 @@ exports.getAllActivityTimes = async (userId, service_contract_id, filters, sort,
           AND at.is_deleted = 0 AND ws.is_deleted = 0 AND u.is_deleted = 0
       `;
 
-      if(service_contract_id){
-        query += ` AND ad.service_contract_id = ?`;
-        countQuery += ` AND ad.service_contract_id = ?`;
+      if(activity_id){
+        query += ` AND ad.activity_id = ?`;
+        countQuery += ` AND ad.activity_id = ?`;
       }
     
-      queryParams.push(service_contract_id);
-      countParams.push(service_contract_id);
+      queryParams.push(activity_id);
+      countParams.push(activity_id);
       
       // **Apply Filters**
       if (filters) {

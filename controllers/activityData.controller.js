@@ -3,14 +3,14 @@ const ActivityDetailsService = require("../services/activityDetails.service");
 
 exports.getAllActivities = async (req, res) => {
   try {
-    const { service_contract_id } = req.params;
+    const { activity_id } = req.params;
     const userId = req.user.id;
     const filters = req.query.filters ? JSON.parse(req.query.filters) : {};
     const sort = req.query.sort ? JSON.parse(req.query.sort) : {};
     const page = req.query.page ? parseInt(req.query.page, 10) : 1;
     const limit = req.query.limit ? parseInt(req.query.limit, 10) : 10;
 
-    const activities = await ActivityDataService.getAllActivities(userId, service_contract_id, filters, sort, page, limit);
+    const activities = await ActivityDataService.getAllActivities(userId, activity_id, filters, sort, page, limit);
     res.status(200).json({ success: true, data: activities });
   } catch (error) {
     res.status(500).json({ success: false, message: "Server Error", error });
@@ -19,8 +19,8 @@ exports.getAllActivities = async (req, res) => {
 
 exports.getAllDates = async (req,res) => {
   try {
-    const { service_contract_id } = req.params;
-    const data = await ActivityDataService.getAllDates(service_contract_id);
+    const { activity_id } = req.params;
+    const data = await ActivityDataService.getAllDates(activity_id);
     return res.status(200).json({ success: true, data: data });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -53,18 +53,14 @@ exports.updateActivity = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const { service_contract_id, activity_date, activity_type_id } = req.body;
+    const { activity_id, activity_date, activity_type_id } = req.body;
 
-    let activityId = await ActivityDataService.checkActivityByDateAndType(service_contract_id, activity_date, activity_type_id);
-     
-    if(!activityId){
-      activityId = await ActivityDataService.createActivity(req.body);
+    var activity_data_id = await ActivityDataService.checkActivityByDateAndType(activity_id, activity_date, activity_type_id);
+    if(!activity_data_id){
+      activity_data_id = await ActivityDataService.createActivity(req.body);
     }
-    
-    data = {activity_id: activityId, id: req.body.activity_detail_id , ...req.body}
-    
-    await ActivityDetailsService.updateActivityDetail(activityId, data, userId);
-    
+    data = {activity_id: activity_id, id: req.body.activity_detail_id , ...req.body}
+    await ActivityDetailsService.updateActivityDetail(activity_data_id, data, userId);
     res.json({ message: "Activity updated" });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -82,8 +78,8 @@ exports.deleteActivity = async (req, res) => {
 
 exports.getsummaryData = async (req, res) => {
   try {
-    const { service_contract_id, month, year } = req.params;
-    const data = await ActivityDataService.getsummaryData(service_contract_id, month, year);
+    const { activity_id, month, year } = req.params;
+    const data = await ActivityDataService.getsummaryData(activity_id, month, year);
     res.status(200).json({ data });
   } catch (err) {
     res.status(500).json({ message: err.message });
