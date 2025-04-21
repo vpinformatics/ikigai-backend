@@ -4,7 +4,7 @@ const pool = require('../config/database');
         const { activity_id, part_id, work_shift_id, total_checked_qty, ok_qty, rework_qty, rejection_qty, remarks, created_by } = data;
         const [result] = await pool.query(
             `INSERT INTO activity_details 
-            (activity_id, part_id, work_shift_id, total_checked_qty, ok_qty, rework_qty, rejection_qty, remarks, created_by) 
+            (activity_data_id, part_id, work_shift_id, total_checked_qty, ok_qty, rework_qty, rejection_qty, remarks, created_by) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [activity_id, part_id, work_shift_id, total_checked_qty, ok_qty, rework_qty, rejection_qty, remarks, created_by]
         );

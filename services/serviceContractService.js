@@ -31,7 +31,7 @@ exports.getAllServiceContracts = async (client_id) => {
 };
 
 exports.createServiceContract = async (serviceContractData, userId) => {
-    console.log('🚀 Creating Service Contract with Transaction');
+    //console.log('🚀 Creating Service Contract with Transaction');
 
     return executeTransaction(async (connection) => {
         const { client_id, service_contract_date, isSinglePart, partId, activityTypes, work_place_id, service_contract_reference } = serviceContractData;
@@ -100,29 +100,24 @@ exports.getServiceContractById = async (id) => {
 };
 
 exports.updateServiceContract = async (id, data, userId) => {
-    console.log('🚀 Updating Service Contract with Transaction', id);
+    // console.log('🚀 Updating Service Contract with Transaction', id);
 
     return executeTransaction(async (connection) => {
         const { service_contract_reference, service_contract_date, isSinglePart, partId, activityTypes, work_place_id } = data;
-
-        console.log('Service Contract Data:', data);
 
         // console.log('Step 1️⃣: Update the service contract');
         await connection.query(
             `UPDATE activities SET service_contract_reference = ?, service_contract_date = ?,  updated_by = ?, work_place_id = ? WHERE id = ?`,
             [service_contract_reference, service_contract_date, userId, work_place_id, id]
         );
-        console.log('1');
         // console.log('Step 2️⃣: Delete existing activity types');
         await connection.query(`DELETE FROM activity_with_types WHERE activity_id = ?`, [id]);
-        console.log('2');
         // Step 3️⃣: Insert new activity types (if any)
         if (Array.isArray(activityTypes) && activityTypes.length > 0) {
             const activityInsertQuery = 'INSERT INTO activity_with_types (activity_id, activity_type_id) VALUES ?';
             const activityValues = activityTypes.map(aid => [id, aid]);
             await connection.query(activityInsertQuery, [activityValues]);
         }
-        console.log('3');
         // console.log('✅ Service Contract Updated:', id);
         return { id };
     });
@@ -175,4 +170,98 @@ exports.getAll = async () => {
     } catch (error) {
         throw error;
     }
+};
+
+exports.getAllByUser = async (userId, filters, sort, page, limit) => {
+    let query = `
+    select 
+        a.client_id,
+        a.id as 'activity_id', 
+        a.activity_number,
+        c.name as 'company_name',
+        ua.user_id,
+        wp.name as 'work_place'
+    from activities a
+        inner join clients c on a.client_id = c.id
+        inner join user_activities ua on ua.activity_id = a.id
+        INNER JOIN work_place wp on wp.id = a.work_place_id
+    WHERE c.status = 'active' AND ua.user_id = ${userId}
+    `;
+    let countQuery = `
+    select 
+        count(1) as count
+    from activities a
+    inner join clients c on a.client_id = c.id
+    inner join user_activities ua on ua.activity_id = a.id
+    INNER JOIN work_place wp on wp.id = a.work_place_id
+    WHERE c.status = 'active' AND ua.user_id = ${userId} 
+    `;
+    const queryParams = [];
+    const countParams = [];
+
+    // Apply filters
+    if (filters) {
+        Object.keys(filters).forEach((key) => {
+            const value = filters[key];
+
+            // Ignore empty search filter
+            if (key === "search" && (!value || !value.trim())) {
+                return;
+            }
+
+            if (key === "search") {
+                const searchFields = ["a.activity_number", "c.name", 'wp.name'];
+
+                const tmpQuery = `(${searchFields.map(field => `${field} LIKE ?`).join(" OR ")})`;
+
+                query += ` AND ${tmpQuery}`;
+                countQuery += ` AND ${tmpQuery}`;
+
+                // Push the same search value with wildcards for all fields
+                const searchValue = `%${value}%`;
+                queryParams.push(...searchFields.map(() => searchValue));
+                countParams.push(...searchFields.map(() => searchValue));
+            } else {
+                query += ` AND ${key} = ?`;
+                countQuery += ` AND ${key} = ?`;
+                queryParams.push(value);
+                countParams.push(value);
+            }
+        });
+    }
+
+    // Apply sorting
+    if (sort) {
+        // if (sort.field == 'statusName') {
+        //     sort.field = 'u.is_active';
+        // }
+        const sortField = sort.field || 'id';
+        const sortOrder = sort.order || 'ASC';
+        query += ` ORDER BY ${sortField} ${sortOrder}`;
+    }
+
+    // Apply pagination
+    let totalRecords = 0;
+    let totalPages = 0;
+    let offset = 0;
+    if (page && limit) {
+        const [countResult] = await pool.query(countQuery, countParams);
+        totalRecords = countResult[0].count;
+        totalPages = Math.ceil(totalRecords / limit);
+        offset = (page - 1) * limit;
+        query += ` LIMIT ? OFFSET ?`;
+        queryParams.push(limit, offset);
+    }
+    const [activities] = await pool.query(query, queryParams);
+
+    return {
+        activities,
+        pagination: {
+            currentPage: page,
+            totalPages,
+            totalRecords,
+            hasPrev: page > 1,
+            hasNext: page < totalPages
+        }
+    };
 };

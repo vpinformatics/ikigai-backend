@@ -89,6 +89,21 @@ exports.getAll = async (req, res) => {
     }
 };
 
+exports.getAllByUser = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const filters = req.query.filters ? JSON.parse(req.query.filters) : {};
+    const sort = req.query.sort ? JSON.parse(req.query.sort) : {};
+    const page = req.query.page ? parseInt(req.query.page, 10) : 1;
+    const limit = req.query.limit ? parseInt(req.query.limit, 10) : 10;
+
+    const activities = await serviceContractService.getAllByUser(userId, filters, sort, page, limit);
+    res.status(200).json({ ...activities });
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.generateExcel = async (req, res) => {
     try {
         console.log('%cThis is a styled log message', 'background: #ffcccc; color: white; padding: 4px; border-radius: 4px;');

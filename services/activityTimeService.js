@@ -139,7 +139,6 @@ exports.getActivityTimeById = async (id) => {
 
 // Create a new activity time entry
 exports.createActivityTime = async (data, userId) => {
-    console.log('createActivityTime()');
     const { activity_id, user_id, work_shift_id, work_start_datetime, work_end_datetime, 
         break_start_datetime, break_end_datetime, ot_hours, ot_is_chargable, 
         total_work_hours, total_break_hours, total_hours, ot_remarks } = data;

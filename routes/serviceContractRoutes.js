@@ -25,6 +25,8 @@ const { authorize } = require('../middlewares/authMiddleware');
 // router.get('/sample', serviceContractController.sample);
 router.get('/getAll', authorize([1, 2]), serviceContractController.getAll);
 
+router.get('/get-all-by-user', authorize([1, 2]), serviceContractController.getAllByUser);
+
 //  router.get('/generate/:id', authorize([1, 2]), serviceContractController.gen1erateExcel);
 
 /**

@@ -147,7 +147,6 @@ const moment = require('moment');
 
   exports.createActivity = async (data) => {
     const { activity_id, activity_date, activity_type_id, created_by } = data;
-    console.log('createActivity()', activity_id, activity_date, activity_type_id, created_by );
 
     // Check if the record already exists
     const [existing] = await pool.query(
@@ -164,13 +163,11 @@ const moment = require('moment');
         "INSERT INTO activity_data (activity_id, activity_date, activity_type_id, created_by) VALUES (?, ?, ?, ?)",
         [activity_id, activity_date, activity_type_id, created_by]
     );
-
     return result.insertId; // Return new record ID
   };
 
   exports.updateActivity= async(id, data) => {
     const { activity_id, activity_date, activity_type_id, updated_by } = data;
-    console.log('updateActivity()',activity_id, activity_date, activity_type_id, updated_by, id);
     await pool.query(
       "UPDATE activity_data SET activity_id=?, activity_date=?, activity_type_id=?, updated_by=?, updated_on=CURRENT_TIMESTAMP WHERE id=?",
       [activity_id, activity_date, activity_type_id, updated_by, id]
@@ -182,7 +179,6 @@ const moment = require('moment');
   }
 
   exports.checkActivityByDateAndType = async(activity_id, activity_date, activity_type_id) => {
-    console.log('checkActivityByDateAndType()', activity_id, activity_date, activity_type_id);
     const [rows] = await pool.query(`
       SELECT id 
       FROM activity_data 
@@ -201,7 +197,7 @@ const moment = require('moment');
       from activity_data a 
       INNER JOIN activity_time at on at.activity_id = a.id
       where a.is_deleted = 0 and at.is_deleted = 0
-            and activity_id = ?
+            and a.activity_id = ?
             AND YEAR(a.activity_date) = ?
             AND MONTH(a.activity_date) = ?
       group by a.activity_date 
@@ -214,10 +210,10 @@ const moment = require('moment');
           sum(adt.total_checked_qty) as total_checked_qty, sum(adt.ok_qty) as ok_qty, 
           sum(adt.rework_qty) as rework_qty, sum(adt.rejection_qty) as rejection_qty 
       from activity_data a 
-      INNER JOIN activity_details adt on adt.activity_id = a.id
+      INNER JOIN activity_details adt on adt.activity_data_id = a.id
       inner join activity_types at on at.id = a.activity_type_id
       where a.is_deleted = 0 and adt.is_deleted = 0
-      and activity_id = ?
+      and a.activity_id = ?
             AND YEAR(a.activity_date) = ?
             AND MONTH(a.activity_date) = ?
        group by a.activity_type_id, at.name;
@@ -229,7 +225,7 @@ const moment = require('moment');
         p.part_code, p.part_number, ads.total_checked_qty, ads.ok_qty, ads.rework_qty, ads.rejection_qty, ads.rejection_percent, ads.remarks
       from activity_data ad
         INNER JOIN activity_types at on at.id = ad.activity_type_id
-        INNER JOIN activity_details ads on ads.activity_id = ad.id
+        INNER JOIN activity_details ads on ads.activity_data_id = ad.id
         INNER JOIN parts p on p.id = ads.part_id
         INNER JOIN work_shift ws on ws.id = ads.work_shift_id
       where ad.is_deleted = 0 AND ads.is_deleted = 0 
