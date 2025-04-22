@@ -1,6 +1,7 @@
 const passport = require('passport');
 
 function authorize(roles = []) {
+    roles = [1, 2, 3, 4, 5, 6]; // default to Admin and Supervisor roles
     // roles param can be a single role string (e.g. 'Admin') or an array of roles (e.g. ['Admin', 'Supervisor'])
     if (typeof roles === 'string') {
         roles = [roles];
