@@ -5,14 +5,14 @@ exports.getAllUsers = async (filters, sort, page, limit) => {
   let query = `
   SELECT 
     u.*, r.name as 'roleName' 
-  FROM Users u
+  FROM users u
   INNER JOIN roles r ON r.id = u.role_id
   WHERE u.is_deleted = FALSE
   `;
   let countQuery = `
   SELECT 
     COUNT(*) as count
-  FROM Users u
+  FROM users u
   INNER JOIN roles r ON r.id = u.role_id
   WHERE u.is_deleted = FALSE
   `;

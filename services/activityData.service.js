@@ -241,35 +241,35 @@ const moment = require('moment');
     const endDate = moment(startDate).endOf('month').format('YYYY-MM-DD');
   
     const query = `
-      WITH activity_minutes AS (
-        SELECT
-          u.id AS user_id,
-          u.name AS user_name,
-          DAY(ad.activity_date) AS day_of_month,
-          TIMESTAMPDIFF(MINUTE, at.work_start_datetime, at.work_end_datetime)
-            - TIMESTAMPDIFF(MINUTE, at.break_start_datetime, at.break_end_datetime) AS work_minutes,
-          at.ot_hours * 60 AS ot_minutes
-        FROM ikigai.users u
-        LEFT JOIN ikigai.activity_time at ON u.id = at.user_id AND at.is_deleted = 0
-        LEFT JOIN ikigai.activity_data ad ON ad.id = at.activity_id
-          AND ad.activity_date BETWEEN '${startDate}' AND '${endDate}'
-        WHERE u.is_deleted = 0 AND u.is_active = 1
-      )
-  
+    WITH activity_minutes AS (
       SELECT
-        user_id,
-        user_name,
-        ${Array.from({ length: 31 }, (_, i) => {
-          const day = i + 1;
-          return `
-            SUM(CASE WHEN day_of_month = ${day} THEN work_minutes ELSE 0 END) AS \`${day}DT\`,
-            SUM(CASE WHEN day_of_month = ${day} THEN ot_minutes ELSE 0 END) AS \`${day}OT\`
-          `;
-        }).join(',')}
-      FROM activity_minutes
-      GROUP BY user_id, user_name
-      ORDER BY user_id;
-    `;
+        u.id AS user_id,
+        u.name AS user_name,
+        DAY(ad.activity_date) AS day_of_month,
+        TIMESTAMPDIFF(MINUTE, at1.work_start_datetime, at1.work_end_datetime)
+          - TIMESTAMPDIFF(MINUTE, at1.break_start_datetime, at1.break_end_datetime) AS work_minutes,
+        at1.ot_hours * 60 AS ot_minutes
+      FROM users u
+      LEFT JOIN activity_time at1 ON u.id = at1.user_id AND at1.is_deleted = 0
+      LEFT JOIN activity_data ad ON ad.id = at1.activity_id
+        AND ad.activity_date BETWEEN '${startDate}' AND '${endDate}'
+      WHERE u.is_deleted = 0 AND u.is_active = 1
+    )
+
+    SELECT
+      user_id,
+      user_name,
+      ${Array.from({ length: 31 }, (_, i) => {
+        const day = i + 1;
+        return `
+          SUM(CASE WHEN day_of_month = ${day} THEN work_minutes ELSE 0 END) AS \`${day}DT\`,
+          SUM(CASE WHEN day_of_month = ${day} THEN ot_minutes ELSE 0 END) AS \`${day}OT\`
+        `;
+      }).join(',')}
+    FROM activity_minutes
+    GROUP BY user_id, user_name
+    ORDER BY user_id;
+  `;
   
     const [rows] = await pool.query(query);
   

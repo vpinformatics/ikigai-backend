@@ -86,7 +86,7 @@ exports.getClientById = async (id) => {
 };
 
 exports.createClient = async (clientData, userId) => {
-  const { name, address, city, state, country, contact_person, contact_email, contact_phone } = clientData;
+  const { name, address, city, state, country, contact_person, contact_email, contact_phone, gst_number } = clientData;
   const [result] = await pool.query(
     'INSERT INTO clients (name, address, city, state, country, contact_person, contact_email, contact_phone, created_by, updated_by, gst_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     [name, address, city, state, country, contact_person, contact_email, contact_phone, userId, userId, gst_number]
